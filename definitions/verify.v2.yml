@@ -8,7 +8,7 @@ info:
     email: devrel@vonage.ctom
     url: 'https://developer.vonage.com/'
 servers:
-  - url: https://api.nexmo.com/v2/verify
+  - url: https://api.vonage.com/v2/verify
 security:
   - basicAuth: []
   - bearerAuth: []
