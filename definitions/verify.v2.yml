@@ -769,7 +769,7 @@ components:
         invalid-parameters:
           title: 'Missing `workflow` parameter'
           detail: 'The `workflow` parameter is required and must be an array'
-          instance: abcd
+          instance: bf0ca0bf927b3b52e3cb03217e1a1ddf
 
     ErrorInvalidCodeRequest:
       type: object
@@ -778,33 +778,37 @@ components:
           type: string
           example: "Invalid Code"
           description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: "https://www.developer.vonage.com/api-errors/verify#invalid-code"
         detail:
           type: string
           example: "The code you provided does not match the expected value."
           description: Detailed error description
         instance:
           type: string
-          example: "xxx"
+          example: "bf0ca0bf927b3b52e3cb03217e1a1ddf"
           description: The instance ID
 
     ErrorInvalidRequest:
       type: object
       properties:
-        type:
-          type: string
-          example: "https://developer.vonage.com/api-errors#not-found"
-          description: URL link to the error code reference
         title:
           type: string
           example: "Not Found"
           description: Error description
+        type:
+          type: string
+          example: "https://developer.vonage.com/api-errors#not-found"
+          description: URL link to the error code reference
         detail:
           type: string
           example: "Request <id> was not found or it has been verified already."
           description: Detailed error description
         instance:
           type: string
-          example: "xxx"
+          example: "bf0ca0bf927b3b52e3cb03217e1a1ddf"
           description: The instance ID
 
     ErrorConflictRequest:
@@ -814,13 +818,17 @@ components:
           type: string
           example: "Conflict"
           description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: "https://www.developer.vonage.com/api-errors/verify#conflict"
         detail:
           type: string
           example: "The current Verify workflow step does not support a code."
           description: Detailed error description
         instance:
           type: string
-          example: "xxx"
+          example: "bf0ca0bf927b3b52e3cb03217e1a1ddf"
           description: The instance ID
 
     ErrorExpiredRequest:
@@ -830,13 +838,17 @@ components:
           type: string
           example: "Invalid Code"
           description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: "https://www.developer.vonage.com/api-errors/verify#expired"
         detail:
           type: string
           example: "An incorrect code has been provided too many times. Workflow terminated."
           description: Detailed error description
         instance:
           type: string
-          example: "xxx"
+          example: "bf0ca0bf927b3b52e3cb03217e1a1ddf"
           description: The instance ID
     
     ErrorInvalidParams:
@@ -846,6 +858,10 @@ components:
           type: string
           description: Error title
           example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: "https://www.developer.vonage.com/api-errors#invalid-params"
         detail:
           type: string
           description: More detailed error descriptions
@@ -880,6 +896,10 @@ components:
           type: string
           description: Generic error message
           example: Rate Limit Hit
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: "https://www.developer.vonage.com/api-errors#throttled"
         detail:
           type: string
           description: Additional information about the error
@@ -888,7 +908,6 @@ components:
           type: string
           description: Internal Trace ID
           example: bf0ca0bf927b3b52e3cb03217e1a1ddf
-
 
   securitySchemes:
     basicAuth:
@@ -900,3 +919,11 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+x-errors:
+  expired:
+    description: The request has been expired due to an invalid code being sent too many times
+    resolution: Request a new Verification
+  conflict:
+    description: The workflow provided does not accept a code
+    resolution: Change to a valid workflow to handle your request
