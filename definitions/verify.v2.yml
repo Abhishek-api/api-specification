@@ -689,11 +689,11 @@ components:
               check_url:
                 type: string
                 description: URL for Silent Auth Verify workflow completion
-                example: https://eu.api.silent.auth/phone_check/v0.1/checks/<id>/redirect
+                example: https://eu.api.silent.auth/phone_check/v0.1/checks/:id/redirect
           example: [
             {
               "type": "check",
-              "check_url": "https://eu.api.silent.auth/phone_check/v0.1/checks/<id>/redirect"
+              "check_url": "https://eu.api.silent.auth/phone_check/v0.1/checks/:id/redirect"
             },
           ]
 
