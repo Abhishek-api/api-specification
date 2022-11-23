@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Vonage Meetings Public API
-  version: 0.1.2
+  version: 0.1.4
   x-label: Beta
 servers:
   - url: https://api-eu.vonage.com/beta/meetings
@@ -90,14 +90,6 @@ paths:
                 $ref: '#/components/schemas/Room'
         '404':
           description: Room not found
-    delete:
-      summary: Delete a room
-      operationId: deleteRoom
-      responses:
-        '204':
-          description: OK
-        '404':
-          description: Room not found
     patch:
        summary: Update an existing room
        operationId: updateRoom
@@ -122,6 +114,12 @@ paths:
                       type: string
                       format: uuid
                       description: 'The theme id for the room'
+                    join_approval_level:
+                      $ref: '#/components/schemas/JoinApprovalLevel'
+                    callback_urls:
+                      $ref: '#/components/schemas/CallbackUrls'
+                    available_features:
+                      $ref: '#/components/schemas/AvailableFeatures'
        responses:
         '200':
           description: OK
@@ -739,6 +737,12 @@ components:
         expire_after_use:
           type: boolean
           description: 'Close the room after a session ends. Only relevant for long_term rooms.'
+        join_approval_level:
+          $ref: '#/components/schemas/JoinApprovalLevel'
+        callback_urls:
+          $ref: '#/components/schemas/CallbackUrls'
+        available_features:
+          $ref: '#/components/schemas/AvailableFeatures'
         _links:
           type: object
           properties:
@@ -783,6 +787,12 @@ components:
           type: string
           format: uuid
           description: 'The theme id for the room'
+        join_approval_level:
+          $ref: '#/components/schemas/JoinApprovalLevel'
+        callback_urls:
+          $ref: '#/components/schemas/CallbackUrls'
+        available_features:
+          $ref: '#/components/schemas/AvailableFeatures'
     RecordingOptions:
       type: object
       properties:
@@ -993,4 +1003,47 @@ components:
           type: string
           format: uuid
           description: The theme id to set as application default theme
+    JoinApprovalLevel:
+      type: string
+      enum:
+        - none
+        - after_owner_only
+        - explicit_approval
+      description: The level of approval needed to join the meeting in the room. When set to "after_owner_only" the participants will join the meeting only after the host joined. When set to "explicit_approval" the participants will join the waiting room and the host will deny/approve them.
+    CallbackUrls:
+      type: object
+      properties:
+        rooms_callback_url:
+          type: string
+          description: Callback url for rooms events, overrides application level rooms callback url.
+          pattern: '^https?:\\/\\/.*$'
+          example: 'https://example.com'
+        sessions_callback_url:
+          type: string
+          description: Callback url for sessions events, overrides application level sessions callback url.
+          pattern: '^https?:\\/\\/.*$'
+          example: 'https://example.com'
+        recordings_callback_url:
+          type: string
+          description: Callback url for recordings events, overrides application level recordings callback url.
+          pattern: '^https?:\\/\\/.*$'
+          example: 'https://example.com'
+    AvailableFeatures:
+      type: object
+      properties:
+        is_recording_available:
+          type: boolean
+          default: true
+          description: Determine if recording feature is available in the UI.
+          example: true
+        is_chat_available:
+          type: boolean
+          default: true
+          description: Determine if chat feature is available in the UI.
+          example: true
+        is_whiteboard_available:
+          type: boolean
+          default: true
+          description: Determine if whiteboard feature is available in the UI.
+          example: true
 tags: []

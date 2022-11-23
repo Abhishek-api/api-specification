@@ -1,7 +1,7 @@
 openapi: 3.0.3
 
 info:
-  version: 1.0.6
+  version: 1.0.16
   title: 10DLC Brand and Campaign Provisioning
   contact:
     name: Vonage
@@ -21,6 +21,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: '#/components/parameters/filter'
       tags:
         - Brands
       description: List brands
@@ -285,6 +286,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: '#/components/parameters/filter'
       tags:
         - Campaigns
       description: List campaigns
@@ -380,11 +382,32 @@ paths:
           $ref: "common/common_errors.yml#/components/responses/BadCredentialsError"
         "404":
           $ref: "common/common_errors.yml#/components/responses/NotFoundError"
-
+  /v1/10dlc/brands/{brand_id}/campaigns/{campaign_id}/resubmit:
+    put:
+      parameters:
+        - $ref: "#/components/parameters/BrandId"
+        - $ref: "#/components/parameters/CampaignId"
+      tags:
+        - Campaigns
+      summary: Re-submit active campaign against specific MNO CRE.
+      description: Re-submit active campaign against specific MNO CRE.
+      operationId: campaignResubmit
+      requestBody:
+        $ref: "#/components/requestBodies/MNOResubmit"
+      responses:
+        "200":
+          $ref: "#/components/responses/ResubmitCampaignResponse"
+        "400":
+          $ref: "#/components/responses/ErrorGeneric"
+        "404":
+          $ref: "common/common_errors.yml#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ErrorBrandParameters"
   /v1/10dlc/brands/{brand_id}/campaigns/{campaign_id}/numbers:
     parameters:
       - $ref: "#/components/parameters/BrandId"
       - $ref: "#/components/parameters/CampaignId"
+      - $ref: '#/components/parameters/filter'
     get:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
@@ -597,7 +620,6 @@ components:
         label: "This is a sample campaign"
         embedded_link: false
         embedded_phone: false
-        affiliate_marketing: true
         number_pool: false
         age_gated: true
         direct_lending: true
@@ -629,6 +651,14 @@ components:
           brand_tier: "LOW"
         auto_renewal: true
         status: "ACTIVE"
+        opt_in_message: |
+          Example Brand: You are now opted-in. For help, reply HELP. To opt-out,
+            reply STOP
+        opt_out_message: |
+          Example Brand: You are now opted-out and will receive no further messages.
+        opt_in_keywords: START,SUBSCRIBE
+        opt_out_keywords: STOP,QUIT
+        help_keywords: HELP,INFO
         _links:
           self:
             $ref: "#/components/examples/LinkCampaign"
@@ -1394,7 +1424,29 @@ components:
             allOf:
               - $ref: "#/components/schemas/VettingRequest"
 
+    ResubmitCampaignResponse:
+      description: Resubmitted campaign response
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/ResubmitCampaignResponseSchema"
+
   requestBodies:
+    MNOResubmit:
+      required: true
+      content:
+        application/json:
+          schema:
+            description: >-
+              ID of MNO. Please refer to the /enum endpoint for an
+              updated list of valid values.
+            type: object
+            required:
+              - mno_ids
+            properties:
+              mno_ids:
+                $ref: "#/components/schemas/MNOIDs"
     LinkNumber:
       required: true
       content:
@@ -1450,6 +1502,8 @@ components:
                   - subscriber_opt_in
                   - subscriber_opt_out
                   - subscriber_help
+                  - message_flow
+                  - help_message
 
     ExistingVettingRequest:
       required: true
@@ -1953,34 +2007,7 @@ components:
       properties:
         account_id:
           $ref: "#/components/schemas/AccountID"
-        vertical:
-          type: string
-          description:
-            Business/industry segment of this campaign. (Required if entity_type !=
-            SOLE_PROPRIETOR). Please refer to the /enum endpoint for an update list
-            of valid values.
-          maxLength: 50
-          enum:
-            - UNKNOWN
-            - REAL_ESTATE
-            - HEALTHCARE
-            - ENERGY
-            - ENTERTAINMENT
-            - RETAIL
-            - AGRICULTURE
-            - INSURANCE
-            - EDUCATION
-            - HOSPITALITY
-            - FINANCIAL
-            - GAMBLING
-            - CONSTRUCTION
-            - NGO
-            - MANUFACTURING
-            - GOVERNMENT
-            - TECHNOLOGY
-            - COMMUNICATION
-          example:
-            $ref: "#/components/examples/Campaign/value/vertical"
+
         usecase:
           type: string
           description: Campaign usecase
@@ -2039,18 +2066,21 @@ components:
             $ref: "#/components/examples/Campaign/value/sub_usecases"
         reseller_id:
           type: string
-          description: Alphanumeric identifier of the reseller that you want to associate with this campaign
+          description: Alphanumeric identifier of the reseller that you want to associate with this campaign. This is **required** when creating a campaign on behalf of another company or entity.
           maxLength: 8
           example:
             $ref: "#/components/examples/Campaign/value/reseller_id"
         description:
           type: string
           description: Summary description of this campaign
+          minLength: 40
           example:
             $ref: "#/components/examples/Campaign/value/description"
         embedded_link:
           type: boolean
-          description: Does message generated by the campaign include URL link in SMS?
+          description: |
+           Set to `true` if the campaign message includes links.
+           **NB:** [Shortened URLs](https://en.wikipedia.org/wiki/URL_shortening) are forbidden.
           example:
             $ref: "#/components/examples/Campaign/value/embedded_link"
         embedded_phone:
@@ -2060,17 +2090,20 @@ components:
             $ref: "#/components/examples/Campaign/value/embedded_phone"
         number_pool:
           type: boolean
-          description: Does campaign utilize pool of phone numbers?
+          description: Set to `true` if campaign uses a pool of numbers.
           example:
             $ref: "#/components/examples/Campaign/value/number_pool"
         age_gated:
           type: boolean
-          description: Age gated message content in campaign.
+          description: |
+            Subscribers will be required to provide their age to opt-in if set to `true`.
+            **NB:** Sex, Hate, Alcohol, Firearms, and Tobacco related (S.H.A.F.T) messages are prohibited.
           example:
             $ref: "#/components/examples/Campaign/value/age_gated"
         direct_lending:
           type: boolean
-          description: Direct lending or loan arrangement
+          description: | 
+            Set to `true` if messages are related to money lending or loan arrangements. 
           example:
             $ref: "#/components/examples/Campaign/value/direct_lending"
         subscriber_opt_in:
@@ -2120,7 +2153,8 @@ components:
             $ref: "#/components/examples/Campaign/value/sample_five"
         message_flow:
           type: string
-          description: Message flow description
+          description: Describes what the `opt_in` option was used for.
+          minLength: 40
           maxLength: 2048
           example:
             $ref: "#/components/examples/Campaign/value/message_flow"
@@ -2133,11 +2167,30 @@ components:
           maxLength: 255
           example:
             $ref: "#/components/examples/Campaign/value/help_message"
-        affiliate_marketing:
-          type: boolean
-          description: Does message content controlled by affiliate marketing other than the brand?
+        opt_in_message:
+          description: >
+            Opt in message sent to confirmation enrollment to a recurring message campaign. Also provide information on how to get `HELP` or undo enrollment.
+            If consumers can text in a keyword,the response should include the Brand name.
+            <br>
+            **NB: Required if recipient opted in via SMS**
+          type: string
+          minLength: 20
+          maxLength: 255
           example:
-            $ref: "#/components/examples/Campaign/value/affiliate_marketing"
+            $ref: "#/components/examples/Campaign/value/opt_in_message"
+        opt_out_message:
+          description: >
+            Opt out message of the campaign.
+            The response to the `STOP` keyword may include the Brand name but should
+            include an acknowledgement of the opt-out request and confirmation that no further
+            messages will be sent.
+            <br>
+            **NB: Required if recipient opted in via SMS**
+          type: string
+          minLength: 20
+          maxLength: 255
+          example:
+            $ref: "#/components/examples/Campaign/value/opt_out_message"
 
     CampaignEditableFields:
       description: Fields that are editable for a campaign
@@ -2175,14 +2228,31 @@ components:
           type: string
           example:
             $ref: "#/components/examples/Campaign/value/message_flow"
-        help_message:
+        opt_in_keywords:
+          description: |
+            Opt in keywords for the campaign, separated by commas(,).
+            This is required if the `subscriber_opt_in` parameter is set.
           type: string
+          maxLength: 255
           example:
-            $ref: "#/components/examples/Campaign/value/help_message"
-        auto_renewal:
-          type: boolean
+            $ref: "#/components/examples/Campaign/value/opt_in_keywords"
+        opt_out_keywords:
+          description: |
+            Opt out keywords for the campaign, separated by commas(,).
+          type: string
+          maxLength: 255
+          default: STOP
           example:
-            $ref: "#/components/examples/Campaign/value/auto_renewal"
+            $ref: "#/components/examples/Campaign/value/opt_out_keywords"
+        help_keywords:
+          description: |
+            Help keywords for the campaign, separated by commas(,).
+          type: string
+          minLength: 20
+          maxLength: 255
+          default: HELP
+          example:
+            $ref: "#/components/examples/Campaign/value/help_keywords"
 
     CampaignSystemFields:
       description: Fields that are added by the system for a campaign
@@ -2397,7 +2467,12 @@ components:
         - REJECTED
         - SUSPENDED
         - REGISTERED
-
+    MNOIDs:
+      type: array
+      minItems: 1
+      items:
+        type: string
+      example: ["10017"]
     Number:
       description: Telephone Number
       example: "14155550110"
@@ -2622,7 +2697,6 @@ components:
                 example: '2022-08-01T14:26:25.862Z'  
 
           
-
     VettingRequest:
       type: object
       properties:
@@ -2664,10 +2738,120 @@ components:
                   type: string
                   example: "https://api.nexmo.com/v1/10dlc/brands/BLQKOPK"
 
+    ResubmitCampaignResponseSchema:
+      type: object
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/CampaignId"
+        brand_id:
+          $ref: "#/components/schemas/BrandId"
+        mno_metadata:
+          type: array
+          items:
+            $ref: "#/components/schemas/UseCaseMNOMetadata"
+          example:
+            $ref: "#/components/examples/ValidUseCase/value/mno_metadata"
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: "https://api.nexmo.com/v1/10dlc/brands/BLQKOPK/vetting/requests/abcd1234"
+            brand:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: "https://api.nexmo.com/v1/10dlc/brands/BLQKOPK"
+
     VettingRequestId:
       description: ID associated with a vetting request
       type: string
       pattern: ^[0-9A-F]{7}$
+
+    Filter:
+          type: array
+          title: Filter
+          description: >
+            This is a double array representing filters combined with AND and OR
+            operators.
+
+            The first level is combined with an AND operator and the second one with
+            an OR.
+
+
+            **Note**: the total number of rules should not exceed 3.
+
+
+            Example:
+
+              The filter
+
+              [[{"field":"name","type":"==","value":"doe"},{"field":"age","type":"<=","value":42}],[{"field":"address.country","type":"regexp","value":"^EN$|^FR$"}]]
+
+              is URL-encoded as a query parameter:
+
+              filter=%5B%5B%7B%22field%22%3A%22name%22%2C%22type%22%3A%22%3D%3D%22%2C%22value%22%3A%22doe%22%7D%2C%7B%22field%22%3A%22age%22%2C%22type%22%3A%22%3C%3D%22%2C%22value%22%3A42%7D%5D%2C%5B%7B%22field%22%3A%22address.country%22%2C%22type%22%3A%22regexp%22%2C%22value%22%3A%22%5EEN%24%7C%5EFR%24%22%7D%5D%5D
+
+              the equivalent logic is:
+
+              ((name==doe OR age<=42) AND (address.country match "EN" or "FR"))
+          minItems: 1
+          maxItems: 3
+          items:
+            type: array
+            minItems: 1
+            maxItems: 3
+            items:
+              type: object
+              title: Rule
+              description: Represents a single rule that can be combined into a filter.
+              required:
+                - field
+                - type
+                - value
+              properties:
+                field:
+                  type: string
+                  title: Field selector
+                  description: >
+                    The path used to to get the field of an input item to evaluate
+                    against.
+
+                    It can target a nested field, in which case it's dot-separated.
+                  example: address.country
+                type:
+                  type: string
+                  title: Type
+                  description: The type of the rule
+                  example: ==
+                  enum:
+                    - regexp
+                    - '!='
+                    - '!=$'
+                    - '!=='
+                    - '!^='
+                    - '!~='
+                    - <
+                    - <=
+                    - '='
+                    - '=$'
+                    - '=='
+                    - '>'
+                    - '>='
+                    - ^=
+                    - ~=
+                value:
+                  title: The value to evaluate against
+                  example: NGO
+                  oneOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+                    - type: integer
 
   securitySchemes:
     basicAuth:
@@ -2734,6 +2918,38 @@ components:
       required: true
       schema:
         $ref: "#/components/schemas/VettingRequestId"
+
+    filter:
+      description: >
+        Narrow down results based on matching conditions.
+
+        Follow the [comprehensive guide](https://developer.vonage.com/messages/10-dlc/filter) to learn how to craft filter queries.
+      in: query
+      name: filter
+      required: false
+      schema:
+        $ref: '#/components/schemas/Filter'
+      examples:
+        simple:
+          description: Simple "age == 42" rule
+          value:
+            - - field: age
+                type: '=='
+                value: 42
+        combination:
+          description: |
+            Combination of AND or OR rules.
+            ((name==doe OR age<=42) AND (address.country match "EN" or "FR"))
+          value:
+            - - field: name
+                type: '=='
+                value: doe
+              - field: age
+                type: <=
+                value: 42
+            - - field: address.country
+                type: regexp
+                value: ^EN$|^FR$
 tags:
   - name: Brands
     description: APIs relating to working with Brands

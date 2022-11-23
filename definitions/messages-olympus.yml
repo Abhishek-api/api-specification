@@ -1,6 +1,6 @@
 openapi: "3.0.1"
 info:
-  version: 1.2.2
+  version: 1.3.2
   title: Messages API
   description: 'The Messages API consolidates and normalises exchanges across all messaging channels. It allows you to use a single API to interact with our various channels such as SMS, MMS, WhatsApp, Viber and Facebook Messenger'
   contact:
@@ -31,7 +31,6 @@ paths:
                   oneOf:
                     - allOf:
                       - $ref: '#/components/schemas/Text'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           text:
                             description: |
@@ -42,7 +41,6 @@ paths:
                   oneOf:
                     - allOf:
                       - $ref: '#/components/schemas/Image'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           image:
                             required:
@@ -64,7 +62,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsMms'
                     - allOf:
                       - $ref: '#/components/schemas/vCard'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           vcard:
                             required:
@@ -80,7 +77,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsMms'
                     - allOf:
                       - $ref: '#/components/schemas/Audio'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           message_type:
                             type: string
@@ -109,7 +105,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsMms'
                     - allOf:
                       - $ref: '#/components/schemas/Video'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           message_type:
                             type: string
@@ -141,15 +136,20 @@ paths:
                   oneOf:
                     - allOf:
                       - $ref: '#/components/schemas/Text'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           text:
                             description: |
                                 The text of message to send; limited to 4096 characters, including unicode.
                       - $ref: '#/components/schemas/channelOptionsWhatsapp'
                     - allOf:
+                      - $ref: '#/components/schemas/Location'
+                      - properties:
+                          text:
+                            description: |
+                                The location to be sent in the message.
+                      - $ref: '#/components/schemas/channelOptionsWhatsapp'
+                    - allOf:
                       - $ref: '#/components/schemas/Image'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           image:
                             required:
@@ -171,7 +171,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsWhatsapp'
                     - allOf:
                       - $ref: '#/components/schemas/Audio'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           audio:
                             required:
@@ -187,7 +186,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsWhatsapp'
                     - allOf:
                       - $ref: '#/components/schemas/Video'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           video:
                             required:
@@ -205,7 +203,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsWhatsapp'
                     - allOf:
                       - $ref: '#/components/schemas/File'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           file:
                             required:
@@ -228,7 +225,6 @@ paths:
                         - whatsapp
                       - $ref: '#/components/schemas/Template'
                       - $ref: '#/components/schemas/channelOptionsWhatsapp'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           whatsapp:
                             type: object
@@ -250,14 +246,12 @@ paths:
                         - message_type
                       - $ref: '#/components/schemas/Custom'
                       - $ref: '#/components/schemas/channelOptionsWhatsapp'
-                      - $ref: '#/components/schemas/outboundMessageType'
 
                 - title: Messenger
                   x-tab-id: Messenger
                   oneOf:
                     - allOf:
                       - $ref: '#/components/schemas/Text'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           text:
                             description: |
@@ -265,7 +259,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsMessenger'
                     - allOf:
                       - $ref: '#/components/schemas/Image'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           image:
                             properties:
@@ -279,7 +272,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsMessenger'
                     - allOf:
                       - $ref: '#/components/schemas/Audio'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           audio:
                             properties:
@@ -293,7 +285,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsMessenger'
                     - allOf:
                       - $ref: '#/components/schemas/Video'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           video:
                             properties:
@@ -305,7 +296,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsMessenger'
                     - allOf:
                       - $ref: '#/components/schemas/File'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           file:
                             properties:
@@ -320,7 +310,6 @@ paths:
                   oneOf:
                     - allOf:
                       - $ref: '#/components/schemas/Text'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           text:
                             description: |
@@ -328,7 +317,6 @@ paths:
                       - $ref: '#/components/schemas/channelOptionsViber'
                     - allOf:
                       - $ref: '#/components/schemas/Image'
-                      - $ref: '#/components/schemas/outboundMessageType'
                       - properties:
                           image:
                             properties:
@@ -523,7 +511,13 @@ x-webhooks:
                                   maxLength: 2000
                       - allOf:
                         - $ref: "#/components/schemas/inboundWhatsAppMessageCommon"
+                        - $ref: "#/components/schemas/Location"                      
+                      - allOf:
+                        - $ref: "#/components/schemas/inboundWhatsAppMessageCommon"
                         - $ref: "#/components/schemas/Reply"
+                      - allOf:
+                        - $ref: "#/components/schemas/inboundWhatsAppMessageCommon"
+                        - $ref: "#/components/schemas/Order"
                       - allOf:
                         - $ref: "#/components/schemas/inboundWhatsAppMessageCommon"
                         - $ref: "#/components/schemas/Unsupported"
@@ -809,6 +803,90 @@ components:
                   type: string
                   example: "Select 9am appointmaent time"
                   description: A description that may be added to the interactive options presented (available only on interactive lists).
+    
+    Location:
+      allOf:
+        - $ref: "#/components/schemas/baseMessageType"
+        - title: Location
+          x-tab-id: Location
+          type: object
+          required:
+            - location
+          properties:
+            message_type:
+              type: string
+              enum:
+                - location
+              example: location
+              description: The type of message to send. You must provide `location` in this field
+            location:
+              required:
+                - lat
+                - long
+              type: object
+              properties:
+                lat:
+                  type: number
+                  example: 40.34772
+                  description: Latitude of the location.
+                long:
+                  type: number
+                  example: -74.18847
+                  description: Longitude of the location.
+                name:
+                  type: string
+                  example: "Vonage"
+                  description: Name of the location.
+                address:
+                  type: string
+                  example: "23 Main St, Holmdel, NJ 07733, USA"
+                  description: Address of the location. Only displayed if `name` is present.
+    Order:
+      allOf:
+        - $ref: "#/components/schemas/baseMessageType"
+        - title: Order
+          x-tab-id: Order
+          type: object
+          required:
+            - order
+          properties:
+            message_type:
+              type: string
+              enum:   
+                - order
+              example: order
+              description: The type of message to send.
+            order:
+              required:
+                - catalog_id
+                - product_items
+              type: object
+              properties:
+                catalog_id:
+                  type: string
+                  example: "2806150799683508"
+                  description: 'The ID of the catalog containing the products in this order.'
+                product_items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product_retailer_id:
+                        type: string
+                        example: "pk1v7rudbg"
+                        description: 'The ID of the specific product being ordered.'
+                      quantity:
+                        type: string
+                        example: "1"
+                        description: 'The quantity ordered for this specific item.'
+                      item_price:
+                        type: string
+                        example: "9.99"
+                        description: 'The unit price for this specific item.'
+                      currency:
+                        type: string
+                        example: "USD"
+                        description: 'The currency code representing the currency for this specific item.'
     Text:
       allOf:
         - $ref: "#/components/schemas/baseMessageType"
@@ -1071,7 +1149,7 @@ components:
         type:
           type: string
           description: Link to error / remediation options
-          example: https://developer.nexmo.com/api-errors/messages-olympus#1010
+          example: https://developer.nexmo.com/api-errors/messages-olympus#1000
         title:
           type: string
           description: Generic error message
@@ -1231,8 +1309,6 @@ components:
         - message
         - message_type
         - channel
-    outboundMessageType:
-      type: object
       properties:
         client_ref:
           type: string
@@ -1624,6 +1700,9 @@ components:
           example: Jane Smith
     Context:
       type: object
+      description: |
+        This is only present for the Inbound Message where the user is quoting another message, or for a `product` message where the user has selected the 'Message Business' 
+        option. It provides information about the quoted message and/or the product message being responded to. 
       required:
         - message_uuid
         - message_from
@@ -1631,11 +1710,27 @@ components:
         message_uuid:
           type: string
           example: aaaaaaaa-bbbb-cccc-dddd-0123456789ab
-          description: The UUID of the message being replied to
+          description: The UUID of the message being quoted. Not present in a `context` object which is the result of a user selecting 'Message Business' in a `product` message.
         message_from:
           type: string
           example: '447700900000'
-          description: The phone number of the **original sender** of the message being replied to in the [E.164](https://en.wikipedia.org/wiki/E.164) format.
+          description: The phone number of the **original sender** of the message being quoted in the [E.164](https://en.wikipedia.org/wiki/E.164) format. Not present in a `context` object which is the result of a user selecting 'Message Business' in a `product` message.
+        whatsapp_referred_product:
+          type: object
+          description: |
+            An object containing details of a product from a `product` message being quoted or replied to using the 'Message Business' option.
+          required:
+            - catalog_id
+            - product_retailer_id
+          properties:
+            catalog_id:
+              type: string
+              example: '1267260820787549'
+              description: The ID of the catalog associated with the product from the `product` message being quoted or replied to using the 'Message Business' option.
+            product_retailer_id: 
+              type: string
+              example: 'r07qei73l7'
+              description: The ID of the product from the `product` message being quoted or replied to using the 'Message Business' option.
     Usage:
       type: object
       properties:
