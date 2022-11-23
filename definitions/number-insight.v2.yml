@@ -56,7 +56,8 @@ paths:
                   type: array
                   enum:
                     - 'fraud_score'
-                  example: ['fraud_score']
+                    - 'sim_swap'
+                  example: ['fraud_score', 'sim_swap']
                   items:
                     type: string
               required:
@@ -110,6 +111,17 @@ paths:
                         type: string
                         description: Verbose description of mapped risk score. Can be one of `very-low`, `low`, `medium-low`, `medium`, `high`, `very-high`.
                         example: high
+                  sim_swap:
+                    type: object
+                    properties:
+                      label:
+                        type: string
+                        description: Verbose description of mapped risk score. Can be one of `very-low`, `low`, `medium-low`, `medium`, `high`, `very-high`.
+                        example: high
+                      risk_recommendation:
+                        type: string
+                        description: Recommended action based on the `fraud-score`. Can be one of `allow`, `flag` or `block`.
+                        example: 'block'
         '400':
           description: Unprocessable Entity
           content:
