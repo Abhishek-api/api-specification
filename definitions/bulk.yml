@@ -127,7 +127,6 @@ paths:
       operationId: listsClear
       summary: Clear list by deleting all items
       responses:
-        # todo: modify response code to 202
         "202":
           $ref: "#/components/responses/AcceptedResponse"
         "401":
@@ -143,7 +142,6 @@ paths:
       operationId: listsFetch
       summary: Fetch and replace all items from datasource
       responses:
-        # todo: modify response code to 202
         "202":
           $ref: "#/components/responses/AcceptedResponse"
         "400":
@@ -741,7 +739,11 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ListDto"
+            allOf:
+              - $ref: "#/components/schemas/ListDto"
+              - type: object
+                example:
+                  $ref: "#/components/examples/ListManualResponseExample/value"
           examples:
             manual:
               $ref: "#/components/examples/ListManualResponseExample"
@@ -782,7 +784,6 @@ components:
                       href: https://api-eu.vonage.com/v0.1/bulk/lists?page_size=100&page=1
                   _embedded:
                     lists:
-                      # todo devrel: can we reuse examples? Based on doc and tickets no
                       # - $ref: "#/components/examples/ListManualResponse/value"
                       - name: Recipients for demo
                         description: List of recipients for demo
@@ -793,7 +794,7 @@ components:
                           - name: lastName
                             key: false
                           - name: number
-                            alias: phoneNumber
+                            alias: Phone
                             key: true
                         datasource:
                           type: manual
@@ -807,17 +808,17 @@ components:
                         created_at: "2022-06-23T13:13:16.491Z"
                         updated_at: "2022-06-23T13:13:16.491Z"
                       # - $ref: "#/components/examples/ListSalesforceResponse/value"
-                      - name: Salesforce contact
+                      - name: Salesforce contacts
                         description: Salesforce contacts for campaign
                         tags:
                           - salesforce
                         attributes:
-                          - key: false
-                            name: Id
-                          - key: false
-                            name: Phone
-                          - key: false
-                            name: Email
+                          - name: Id
+                            key: false
+                          - name: Phone
+                            key: true
+                          - name: Email
+                            key: false
                         datasource:
                           type: salesforce
                           integration_id: salesforce
@@ -911,10 +912,11 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ApiDataAffected"
-          examples:
-            simple:
-              $ref: "#/components/examples/ItemsImportExample"
+            allOf:
+              - $ref: "#/components/schemas/ApiDataAffected"
+              - type: object
+                example:
+                  $ref: "#/components/examples/ItemsImportExample/value"
 
     ActionResponse:
       description: Action response
@@ -991,31 +993,31 @@ components:
                             text: "{{ parameters.message }}"
                           response:
                             sync:
-                              invocation_id: "{{response.payload.message_uuid}}"
-                              value: "{{response.statusCode}}"
+                              invocation_id: "{{ response.payload.message_uuid }}"
+                              value: "{{ response.statusCode }}"
                               success:
                                 values:
                                   - "200"
+                                  - "201"
                                   - "202"
-                                  - "204"
                               error:
-                                code: "{{response.payload.statusCode}}"
-                                details: "{{response.payload.error.details}}"
+                                code: "{{ response.payload.statusCode }}"
+                                details: "{{ response.payload.error.details }}"
                             async:
-                              invocation_id: "{{ event.message_uuid }}"
+                              invocation_id: "{{ response.payload.message_uuid }}"
                               status:
-                                value: "{{event.status}}"
+                                value: "{{ response.payload.status }}"
                                 success:
                                   values:
                                     - delivered
+                                info:
+                                  values:
+                                    - submitted
                                 error:
                                   values:
                                     - rejected
                                     - undeliverable
-                                  details: "{{event.error.details}}"
-                                info:
-                                  values:
-                                    - submitted
+                                  details: "{{ response.payload.error.details }}"
                         timeout_seconds: 5
                         id: 99ea10e0-1f14-4f55-b976-3c88ea8ec4cd
                         created_at: "2022-06-23T17:45:31.782Z"
@@ -1112,11 +1114,11 @@ components:
                                     - name: listId
                                       value: fba7c209-ebb9-4b14-8acb-09a803d4f0a0
                                     - name: number
-                                      value: "{{event.from}}"
+                                      value: "{{ event.data.from }}"
                                 name: opt-out
                                 description: unsubscribe
                                 recipient:
-                                  correlation_id: "{{event.from}}"
+                                  correlation_id: "{{ event.data.from }}"
                         id: e721113d-0948-4edb-b4af-e3f0578d708c
                         created_at: "2022-06-24T07:49:33.748Z"
                         updated_at: "2022-06-24T07:49:33.748Z"
@@ -1390,12 +1392,18 @@ components:
       description: Identifier of an action invocation
       type: string
       format: uuid
-      example: "{{ event.reqId }}"
+      example: "{{ event.data.reqId }}"
 
     RecipientId:
       description: String identifier of a recipient, for example his email, phone number etc
       type: string
       example: 15551584817
+
+    RunItemId:
+      description: String identifier the item id during a job run - this is the list item id which is copied while taking the list snapshot
+      type: string
+      format: uuid
+      example: 51aca838-2cf6-4100-b0d2-e74ac0e95c88
 
     Tags:
       description: custom string assigned with a resource
@@ -1571,7 +1579,6 @@ components:
           type: boolean
           example: true
 
-    # todo:: breaking change: root list type is removed - use the datasource type
     ListSystemFields:
       description: Fields that are added to a list by the system
       type: object
@@ -1653,7 +1660,6 @@ components:
               default: true
               example: true
 
-    # todo rename from ActionHttpAsyncStatusValues
     HttpApiInvokeResponseStatus:
       type: object
       properties:
@@ -1666,7 +1672,6 @@ components:
           example:
             - "202"
 
-    # todo: rename from ActionHttpAsyncErrorStatus
     HttpApiInvokeResponseErrorStatus:
       allOf:
         - $ref: "#/components/schemas/HttpApiInvokeResponseStatus"
@@ -1674,22 +1679,17 @@ components:
           properties:
             details:
               type: string
-              example: "{{ event.error.details }}"
+              example: "{{ response.payload.error.details }}"
       required:
         - details
-      # todo devrel: how to override the error example
-      example:
-        values:
-          - "404"
 
-    # todo: rename from ActionHttpAsync
     HttpResponseDetails:
       type: object
       properties:
         invocation_id:
           $ref: "#/components/schemas/InvocationId"
         value:
-          description: expression used to extract the status value from the response for example in a sync response, this would be the {{response.statusCode}} or a payload attribute {{response.payload.status}} or an async event details {{event.status}}
+          description: expression used to extract the status value from the response for example in a sync response, this would be the {{ response.statusCode }} or a payload attribute {{ response.payload.status }}
           type: string
           default: "{{ response.statusCode }}"
           example: "{{ response.statusCode }}"
@@ -1706,7 +1706,6 @@ components:
                     - "200"
                     - "201"
                     - "202"
-                    - "204"
                   example:
                     - "200"
         info:
@@ -1753,7 +1752,6 @@ components:
       discriminator:
         propertyName: type
 
-    # todo rename from HttpApiInvokeDto
     HttpApiInvokeCommand:
       description: define attributes to execute an http action
       x-tab-id: HttpApiInvoke
@@ -1922,7 +1920,7 @@ components:
       properties:
         correlation_id:
           type: string
-          example: "{{event.from}}"
+          example: "{{ event.data.from }}"
       required:
         - correlation_id
 
@@ -1945,7 +1943,6 @@ components:
     Segmentation:
       allOf:
         - $ref: "#/components/schemas/Rule"
-        # todo: breaking change: remove template from segmentation
 
     EventMatcher:
       allOf:
@@ -2041,7 +2038,6 @@ components:
               $ref: "#/components/schemas/Tags"
             job_id:
               $ref: "#/components/schemas/JobId"
-            # todo: group the schedule attributes
             schedule:
               type: object
               properties:
@@ -2145,10 +2141,10 @@ components:
             state: PH
       required:
         - id
-        - event_type
-        - src_ctx
+        - type
         - occurred_at
-        - event_data
+        - data
+        - src_ctx
 
     ExecutionStatisticsEvent:
       allOf:
@@ -2161,6 +2157,8 @@ components:
               $ref: "#/components/schemas/RunId"
             recipient_id:
               $ref: "#/components/schemas/RecipientId"
+            run_item_id:
+              $ref: "#/components/schemas/RunItemId"
       required:
         - job_id
         - run_id
@@ -2295,7 +2293,7 @@ components:
           - name: lastName
             key: false
           - name: number
-            alias: phoneNumber
+            alias: Phone
             key: true
 
     ListManualResponseExample:
@@ -2309,7 +2307,7 @@ components:
           - name: lastName
             key: false
           - name: number
-            alias: phoneNumber
+            alias: Phone
             key: true
         datasource:
           type: manual
@@ -2325,7 +2323,7 @@ components:
 
     ListSalesforceRequestExample:
       value:
-        name: Salesforce contact
+        name: Salesforce contacts
         description: Salesforce contacts for campaign
         tags:
           - salesforce
@@ -2348,24 +2346,22 @@ components:
         tags:
           - salesforce
         attributes:
-          - key: false
-            name: Id
-          - key: false
-            name: Phone
-          - key: false
-            name: Email
+          - name: Id
+            key: false
+          - name: Phone
+            key: false
+          - name: Email
+            key: false
         datasource:
           type: salesforce
           integration_id: salesforce
           soql: SELECT Id, LastName, FirstName, Phone, Email, OtherCountry FROM Contact
-        type: salesforce
         items_count: 25000
         sync_status:
           value: configured
-          dirty: false
-          data_modified: false
           metadata_modified: false
-        content_synced: true
+          data_modified: false
+          dirty: false
         id: 4cb98f71-a879-49f7-b5cf-2314353eb52c
         created_at: "2022-08-02T13:22:04.267Z"
         updated_at: "2022-08-02T13:22:04.267Z"
@@ -2403,18 +2399,18 @@ components:
         name: vg-send-sms
         description: Send text message using Vonage messaging APIs
         parameters:
-          - type: string
+          - name: fromNumber
+            type: string
             required: true
-            name: fromNumber
-          - type: string
+          - name: toNumber
+            type: string
             required: true
-            name: toNumber
-          - type: string
+          - name: message
+            type: string
             required: true
-            name: message
-          - type: secret
+          - name: vonage-jwt-token
+            type: secret
             required: true
-            name: vonage-jwt-token
             default: vng-prd-messaging-api
         command:
           type: http-api-invoke
@@ -2427,39 +2423,38 @@ components:
               value: Bearer {{ parameters.vonage-jwt-token }}
           payload:
             channel: sms
-            to: "{{ parameters.toNumber }}"
             from: "{{ parameters.fromNumber }}"
+            to: "{{ parameters.toNumber }}"
             message_type: text
             text: "{{ parameters.message }}"
-            response:
-              sync:
-                invocation_id: "{{response.payload.message_uuid}}"
-                value: "{{response.statusCode}}"
-                unmapped_values_status: error
+          response:
+            sync:
+              invocation_id: "{{ response.payload.message_uuid }}"
+              value: "{{ response.statusCode }}"
+              unmapped_values_status: error
+              success:
+                values:
+                  - "200"
+                  - "201"
+                  - "202"
+              error:
+                details: "{{ response.payload.error.details }}"
+            async:
+              invocation_id: "{{ response.payload.message_uuid }}"
+              value: "{{ response.payload.status }}"
+              unmapped_values_status: error
+              status:
                 success:
                   values:
-                    - "200"
-                    - "202"
-                    - "204"
+                    - delivered
+                info:
+                  values:
+                    - submitted
                 error:
-                  code: "{{response.payload.statusCode}}"
-                  details: "{{response.payload.error.details}}"
-              async:
-                invocation_id: "{{ event.message_uuid }}"
-                value: "{{event.status}}"
-                unmapped_values_status: error
-                status:
-                  success:
-                    values:
-                      - delivered
-                  error:
-                    values:
-                      - rejected
-                      - undeliverable
-                    details: "{{event.error.details}}"
-                  info:
-                    values:
-                      - submitted
+                  values:
+                    - rejected
+                    - undeliverable
+                  details: "{{ response.payload.error.details }}"
         timeout_seconds: 5
 
     ActionSendMessengerRequestExample:
@@ -2474,9 +2469,9 @@ components:
               codes:
                 - "202"
             error:
-              code: "{{response.payload.statusCode}}"
-              details: "{{response.payload.error.details}}"
-            invocation_id: "{{response.payload.message_uuid}}"
+              code: "{{ response.payload.statusCode }}"
+              details: "{{ response.payload.error.details }}"
+            invocation_id: "{{ response.payload.message_uuid }}"
           url: https://api.nexmo.com/v1/messages
           async:
             status:
@@ -2487,12 +2482,12 @@ components:
                 values:
                   - rejected
                   - undeliverable
-                details: "{{event.error.detail}}"
-              value: "{{event.status}}"
+                details: "{{ event.data.error.detail }}"
+              value: "{{ event.data.status }}"
               success:
                 values:
                   - delivered
-            invocation_id: "{{ event.message_uuid }}"
+            invocation_id: "{{ event.data.message_uuid }}"
           headers:
             - name: Content-Type
               value: application/json
@@ -2551,7 +2546,7 @@ components:
               "{{ parameters.itemAttribute }}": "{{ parameters.attributeValue }}"
           response:
             sync:
-              value: "{{response.statusCode}}"
+              value: "{{ response.statusCode }}"
               success:
                 values:
                   - "200"
@@ -2589,35 +2584,34 @@ components:
             from: "{{ parameters.fromNumber }}"
             channel: sms
             text: "{{ parameters.message }}"
-        response:
-          sync:
-            invocation_id: "{{response.payload.message_uuid}}"
-            value: "{{response.statusCode}}"
-            unmapped_values_status: error
-            success:
-              values:
-                - "200"
-                - "202"
-                - "204"
-            error:
-              code: "{{response.payload.statusCode}}"
-              details: "{{response.payload.error.details}}"
-          async:
-            invocation_id: "{{ event.message_uuid }}"
-            value: "{{event.status}}"
-            unmapped_values_status: error
-            status:
+          response:
+            sync:
+              invocation_id: "{{ response.payload.message_uuid }}"
+              value: "{{ response.statusCode }}"
+              unmapped_values_status: error
               success:
                 values:
-                  - delivered
+                  - "200"
+                  - "201"
+                  - "202"
               error:
-                values:
-                  - rejected
-                  - undeliverable
-                details: "{{event.error.details}}"
-              info:
-                values:
-                  - submitted
+                details: "{{ response.payload.error.details }}"
+            async:
+              invocation_id: "{{ response.payload.message_uuid }}"
+              value: "{{ response.payload.status }}"
+              unmapped_values_status: error
+              status:
+                success:
+                  values:
+                    - delivered
+                info:
+                  values:
+                    - submitted
+                error:
+                  values:
+                    - rejected
+                    - undeliverable
+                  details: "{{ response.payload.error.details }}"
         timeout_seconds: 5
         id: 99ea10e0-1f14-4f55-b976-3c88ea8ec4cd
         created_at: "2022-06-23T17:45:31.782Z"
@@ -2672,11 +2666,11 @@ components:
                     - name: listId
                       value: fba7c209-ebb9-4b14-8acb-09a803d4f0a0
                     - name: number
-                      value: "{{event.from}}"
+                      value: "{{ event.data.from }}"
                 name: opt-out
                 description: unsubscribe
                 recipient:
-                  correlation_id: "{{event.from}}"
+                  correlation_id: "{{ event.data.from }}"
 
     JobResponseExample:
       value:
@@ -2727,11 +2721,11 @@ components:
                     - name: listId
                       value: fba7c209-ebb9-4b14-8acb-09a803d4f0a0
                     - name: number
-                      value: "{{event.from}}"
+                      value: "{{ event.data.from }}"
                 name: opt-out
                 description: unsubscribe
                 recipient:
-                  correlation_id: "{{event.from}}"
+                  correlation_id: "{{ event.data.from }}"
         id: e721113d-0948-4edb-b4af-e3f0578d708c
         created_at: "2022-06-24T07:49:33.748Z"
         updated_at: "2022-06-24T07:49:33.748Z"
