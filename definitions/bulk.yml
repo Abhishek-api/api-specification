@@ -680,9 +680,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RunEditableFields"
-          examples:
-            simple:
-              $ref: "#/components/examples/RunRequestExample"
 
   responses:
     AcceptedResponse:
@@ -1129,9 +1126,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RunDto"
-          examples:
-            simple:
-              $ref: "#/components/examples/RunResponseExample"
 
     RunsPagedResponse:
       description: Runs paged response
@@ -1631,7 +1625,7 @@ components:
         - list_id
         - data
 
-    ActionParameterTypeEnum:
+    ParameterTypeEnum:
       type: string
       enum:
         - string
@@ -1639,26 +1633,26 @@ components:
       default: string
       example: string
 
-    ActionParameterName:
+    ParameterName:
       type: string
       minLength: 1
       maxLength: 50
       example: from_number
 
-    ActionParameterDto:
+    ParameterDto:
       allOf:
         - $ref: "#/components/schemas/ResourceNameAndDescription"
         - type: object
           properties:
             type:
-              $ref: "#/components/schemas/ActionParameterTypeEnum"
+              $ref: "#/components/schemas/ParameterTypeEnum"
             default:
               type: string
-              example: 5552036475
+              example: Trevor S. Wallace
             required:
               type: boolean
               default: true
-              example: true
+              example: false
 
     HttpApiInvokeResponseStatus:
       type: object
@@ -1723,11 +1717,11 @@ components:
       required:
         - invocation_id
 
-    ActionParameterValue:
+    ParameterValue:
       type: object
       properties:
         name:
-          $ref: "#/components/schemas/ActionParameterName"
+          $ref: "#/components/schemas/ParameterName"
         value:
           type: string
           example: "15554764733"
@@ -1777,7 +1771,7 @@ components:
             headers:
               type: array
               items:
-                $ref: "#/components/schemas/ActionParameterValue"
+                $ref: "#/components/schemas/ParameterValue"
               example:
                 - name: Content-Type
                   value: application/json
@@ -1812,7 +1806,7 @@ components:
             parameters:
               type: array
               items:
-                $ref: "#/components/schemas/ActionParameterDto"
+                $ref: "#/components/schemas/ParameterDto"
             command:
               # todo devrel: - how to list the command attributes
               discriminator:
@@ -1906,7 +1900,7 @@ components:
           maxItems: 20
           type: array
           items:
-            $ref: "#/components/schemas/ActionParameterValue"
+            $ref: "#/components/schemas/ParameterValue"
           example:
             - name: fromNumber
               value: "447418365541"
@@ -2729,25 +2723,6 @@ components:
         id: e721113d-0948-4edb-b4af-e3f0578d708c
         created_at: "2022-06-24T07:49:33.748Z"
         updated_at: "2022-06-24T07:49:33.748Z"
-
-    RunRequestExample:
-      value:
-        name: E2E Demo run
-        job_id: e721113d-0948-4edb-b4af-e3f0578d708c
-        status: scheduled
-        start_at: "2022-06-24T04:06:36.000Z"
-        end_at: "2022-06-24T08:57:55.917Z"
-
-    RunResponseExample:
-      value:
-        name: E2E Demo run
-        job_id: e721113d-0948-4edb-b4af-e3f0578d708c
-        status: scheduled
-        start_at: "2022-06-24T04:06:36.000Z"
-        end_at: "2022-06-24T08:57:55.917Z"
-        id: 51aca838-2cf6-4100-b0d2-e74ac0e95c88
-        created_at: "2022-06-24T07:57:56.301Z"
-        updated_at: "2022-06-24T07:57:56.301Z"
 
     ActionCallEventMessagingExample:
       value:
