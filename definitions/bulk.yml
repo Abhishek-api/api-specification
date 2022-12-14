@@ -3,14 +3,12 @@ info:
   title: Vonage Bulk API
   description: REST APIs to create and orchestrate bulk communication campaigns using Vonage APIs and Applications.
   version: 0.1.0
-  #  todo devrel: check contact details for vonage links
   contact:
-    name: Vonage.com
+    name: Vonage DevRel
     email: devrel@vonage.com
     url: "https://developer.vonage.com/"
     x-twitter: Vonage
   termsOfService: "https://www.nexmo.com/terms-of-use"
-  #  todo devrel: are we MIT licence?
   license:
     name: The MIT License (MIT)
     url: "https://opensource.org/licenses/MIT"
@@ -26,11 +24,10 @@ tags:
     description: API to create a campaign ("Job") utilising a list, a set of actions and events
   - name: runs
     description: APIs relating to working with runs
-  # todo devrel: need better description for events and webhooks tags
   - name: events
-    description: APIs relating to working with events
+    description: APIs relating to events - eg change to user subscribe status, a new list being created based on a response, invoke a chat bot agent or trigger certain analytics. 
   - name: webhooks
-    description: APIs relating to working with webhooks
+    description: APIs relating to working with webhooks, used to notify your application of events
 servers:
   - url: https://api-eu.vonage.com/v0.1/bulk
     description: prod env in EU geo
@@ -1400,18 +1397,13 @@ components:
       example: 51aca838-2cf6-4100-b0d2-e74ac0e95c88
 
     Tags:
-      description: custom string assigned with a resource
+      description: up to 10 custom strings assigned with a resource - each must be between 1 and 15 characters
       type: array
       minItems: 0
       maxItems: 10
       items:
         type: string
-        # todo devrel: why min/max length fails rendering?
-        #        minLength: 1
-        #        maxLength: 15
-      example:
-        - vip
-        - holiday
+      example: ['vip', 'holiday']
 
     BulkBase:
       description: Common attributes of any Bulk API resource
@@ -1808,11 +1800,11 @@ components:
               items:
                 $ref: "#/components/schemas/ParameterDto"
             command:
-              # todo devrel: - how to list the command attributes
               discriminator:
                 propertyName: type
-              oneOf:
-                - $ref: "#/components/schemas/HttpApiInvokeCommand"
+              type: object
+              properties:
+                $ref: "#/components/schemas/HttpApiInvokeCommand"
               example:
                 $ref: "#/components/examples/ActionSendSMSRequestExample/value/command"
             timeout_seconds:
