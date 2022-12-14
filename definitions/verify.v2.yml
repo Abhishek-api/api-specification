@@ -402,6 +402,8 @@ components:
         - type: object
           description: Request a code be sent to a user
           properties:
+            brand:
+              $ref: '#/components/schemas/Brand'
             workflow:
               type: array
               items:
