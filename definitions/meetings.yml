@@ -1,8 +1,7 @@
 openapi: 3.0.0
 info:
   title: Vonage Meetings Public API
-  version: 0.1.4
-  x-label: Beta
+  version: 0.1.6
 servers:
   - url: https://api-eu.vonage.com/beta/meetings
 paths:
@@ -24,6 +23,10 @@ paths:
                     type: integer
                     example: 10
                     description: The number of results returned on this page.
+                  total_items:
+                    type: integer
+                    example: 30
+                    description: The overall number of available rooms.
                   _embedded:
                     type: object
                     properties:
@@ -116,6 +119,8 @@ paths:
                       description: 'The theme id for the room'
                     join_approval_level:
                       $ref: '#/components/schemas/JoinApprovalLevel'
+                    initial_join_options:
+                      $ref: '#/components/schemas/InitialJoinOptions'
                     callback_urls:
                       $ref: '#/components/schemas/CallbackUrls'
                     available_features:
@@ -739,6 +744,8 @@ components:
           description: 'Close the room after a session ends. Only relevant for long_term rooms.'
         join_approval_level:
           $ref: '#/components/schemas/JoinApprovalLevel'
+        initial_join_options:
+          $ref: '#/components/schemas/InitialJoinOptions'
         callback_urls:
           $ref: '#/components/schemas/CallbackUrls'
         available_features:
@@ -789,6 +796,8 @@ components:
           description: 'The theme id for the room'
         join_approval_level:
           $ref: '#/components/schemas/JoinApprovalLevel'
+        initial_join_options:
+          $ref: '#/components/schemas/InitialJoinOptions'
         callback_urls:
           $ref: '#/components/schemas/CallbackUrls'
         available_features:
@@ -1046,4 +1055,13 @@ components:
           default: true
           description: Determine if whiteboard feature is available in the UI.
           example: true
+    InitialJoinOptions:
+      type: object
+      properties:
+        microphone_state:
+          type: string
+          enum: [ on, off, default ]
+          default: default
+          description: Set the default microphone option for users in the pre-join screen of this room.
+          example: default
 tags: []
