@@ -25,7 +25,7 @@ tags:
   - name: runs
     description: APIs relating to working with runs
   - name: events
-    description: APIs relating to events - eg change to user subscribe status, a new list being created based on a response, invoke a chat bot agent or trigger certain analytics. 
+    description: APIs relating to events - eg change to user subscribe status, a new list being created based on a response, invoke a chat bot agent or trigger certain analytics.
   - name: webhooks
     description: APIs relating to working with webhooks, used to notify your application of events
 servers:
@@ -1403,7 +1403,7 @@ components:
       maxItems: 10
       items:
         type: string
-      example: ['vip', 'holiday']
+      example: [ 'vip', 'holiday' ]
 
     BulkBase:
       description: Common attributes of any Bulk API resource
@@ -1911,28 +1911,28 @@ components:
         - correlation_id
 
     Rule:
-      allOf:
-        - $ref: "#/components/schemas/ResourceNameAndDescription"
-        - type: object
-          properties:
-            condition:
-              $ref: "#/components/schemas/Expression"
-            action_call:
-              $ref: "#/components/schemas/ActionCall"
-            recipient:
-              $ref: "#/components/schemas/RecipientCorrelation"
+      type: object
+      properties:
+        # todo: use allOf with $ref: "#/components/schemas/ResourceNameAndDescription"
+        name:
+          description: the name of the resource
+          type: string
+          maxLength: 255
+        description:
+          description: the description of the resource
+          type: string
+          maxLength: 1024
+        condition:
+          $ref: "#/components/schemas/Expression"
+        action_call:
+          $ref: "#/components/schemas/ActionCall"
+        recipient:
+          $ref: "#/components/schemas/RecipientCorrelation"
       required:
+        - name
         - condition
         - action_call
         - recipient
-
-    Segmentation:
-      allOf:
-        - $ref: "#/components/schemas/Rule"
-
-    EventMatcher:
-      allOf:
-        - $ref: "#/components/schemas/Rule"
 
     MatchingStrategyTypeEnum:
       type: string
@@ -1950,9 +1950,7 @@ components:
         matchers:
           type: array
           items:
-            $ref: "#/components/schemas/EventMatcher"
-          example:
-            $ref: "#/components/examples/JobSegmentationRequestExample/value/definition/events_handler/matchers"
+            $ref: "#/components/schemas/Rule"
       required:
         - matchers
 
@@ -1974,22 +1972,27 @@ components:
         propertyName: type
 
     SegmentationJobDto:
+      description: define segmentation job attributes
+      x-tab-id: segmentation-job
       allOf:
         - $ref: "#/components/schemas/JobDefinitionBase"
         - type: object
           properties:
             type:
+              type: string
+              enum:
+                - segmentation-job
+              default: segmentation-job
               example: segmentation-job
             recipients:
               $ref: "#/components/schemas/Recipients"
             segmentations:
               type: array
               items:
-                $ref: "#/components/schemas/Segmentation"
+                $ref: "#/components/schemas/Rule"
             events_handler:
               $ref: "#/components/schemas/EventsHandler"
           required:
-            - type
             - recipients
             - segmentations
       discriminator:
@@ -2006,8 +2009,11 @@ components:
             definition:
               discriminator:
                 propertyName: type
-              oneOf:
-                - $ref: "#/components/schemas/SegmentationJobDto"
+              type: object
+              properties:
+                $ref: "#/components/schemas/SegmentationJobDto"
+              example:
+                $ref: "#/components/examples/JobSegmentationRequestExample/value/definition"
 
     JobDto:
       allOf:
@@ -2627,7 +2633,7 @@ components:
                   type: action
                 parameters:
                   - name: fromNumber
-                    value: "447418365541"
+                    value: "441632960947"
                   - name: toNumber
                     value: "{{ item.number }}"
                   - name: message
