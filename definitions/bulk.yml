@@ -2041,10 +2041,11 @@ components:
                   type: string
                   format: date-time
                   example: "2022-06-20T05:46:00.936Z"
-      required:
-        - job_id
-        - start_at
-        - end_at
+              required:
+                - start_at
+          required:
+            - job_id
+            - schedule
 
     RunStatusEnum:
       type: string
