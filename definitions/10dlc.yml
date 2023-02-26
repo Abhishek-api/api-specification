@@ -1,7 +1,7 @@
 openapi: 3.0.3
 
 info:
-  version: 1.0.7
+  version: 1.0.18
   title: 10DLC Brand and Campaign Provisioning
   contact:
     name: Vonage
@@ -382,7 +382,27 @@ paths:
           $ref: "common/common_errors.yml#/components/responses/BadCredentialsError"
         "404":
           $ref: "common/common_errors.yml#/components/responses/NotFoundError"
-
+  /v1/10dlc/brands/{brand_id}/campaigns/{campaign_id}/resubmit:
+    put:
+      parameters:
+        - $ref: "#/components/parameters/BrandId"
+        - $ref: "#/components/parameters/CampaignId"
+      tags:
+        - Campaigns
+      summary: Re-submit active campaign against specific MNO CRE.
+      description: Re-submit active campaign against specific MNO CRE.
+      operationId: campaignResubmit
+      requestBody:
+        $ref: "#/components/requestBodies/MNOResubmit"
+      responses:
+        "200":
+          $ref: "#/components/responses/ResubmitCampaignResponse"
+        "400":
+          $ref: "#/components/responses/ErrorGeneric"
+        "404":
+          $ref: "common/common_errors.yml#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ErrorBrandParameters"
   /v1/10dlc/brands/{brand_id}/campaigns/{campaign_id}/numbers:
     parameters:
       - $ref: "#/components/parameters/BrandId"
@@ -484,7 +504,7 @@ paths:
                 account_id:
                   $ref: '#/components/schemas/AccountID'
                 campaign_id:
-                  $ref: '#/components/schemas/CampaignId'
+                  $ref: '#/components/schemas/TCRCampaignID'
                 label:
                   $ref: '#/components/schemas/CampaignLabel'
               required:
@@ -525,6 +545,20 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/VettingProviders"
+  /enum:
+    get:
+      tags:
+        - Enums
+      summary: Get enumeration values
+      description: Get the list of all enum values available for each enum parameter
+      operationId: getEnumValues
+      responses:
+        '200':
+          $ref: "#/components/responses/EnumResponse"
+        '400':
+          $ref: '#/components/responses/ErrorGeneric'
+        '401':
+          $ref: 'common/common_errors.yml#/components/responses/BadCredentialsError'
 components:
   examples:
     BrandNexmo:
@@ -600,7 +634,6 @@ components:
         label: "This is a sample campaign"
         embedded_link: false
         embedded_phone: false
-        affiliate_marketing: true
         number_pool: false
         age_gated: true
         direct_lending: true
@@ -632,6 +665,14 @@ components:
           brand_tier: "LOW"
         auto_renewal: true
         status: "ACTIVE"
+        opt_in_message: |
+          Example Brand: You are now opted-in. For help, reply HELP. To opt-out,
+            reply STOP
+        opt_out_message: |
+          Example Brand: You are now opted-out and will receive no further messages.
+        opt_in_keywords: START,SUBSCRIBE
+        opt_out_keywords: STOP,QUIT
+        help_keywords: HELP,INFO
         _links:
           self:
             $ref: "#/components/examples/LinkCampaign"
@@ -1389,6 +1430,22 @@ components:
                 vetting_instruction:
                   type: string
 
+    EnumResponse:
+      description: List of all enumeration values
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              entity_type:
+                type: array
+                items:
+                 type: object
+                 properties:
+                  id:
+                    type: string
+                    example:  "GOVERNMENT"
+
     VettingRequest:
       description: Information about a vetting request
       content:
@@ -1397,7 +1454,29 @@ components:
             allOf:
               - $ref: "#/components/schemas/VettingRequest"
 
+    ResubmitCampaignResponse:
+      description: Resubmitted campaign response
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/ResubmitCampaignResponseSchema"
+
   requestBodies:
+    MNOResubmit:
+      required: true
+      content:
+        application/json:
+          schema:
+            description: >-
+              ID of MNO. Please refer to the [/enum](#enums) endpoint for an
+              updated list of valid values.
+            type: object
+            required:
+              - mno_ids
+            properties:
+              mno_ids:
+                $ref: "#/components/schemas/MNOIDs"
     LinkNumber:
       required: true
       content:
@@ -1453,6 +1532,8 @@ components:
                   - subscriber_opt_in
                   - subscriber_opt_out
                   - subscriber_help
+                  - message_flow
+                  - help_message
 
     ExistingVettingRequest:
       required: true
@@ -1526,6 +1607,8 @@ components:
                 description: Type of vetting to perform.
                 type: string
                 example: "abcd123"
+              vetting_political_details:
+                $ref: '#/components/schemas/VettingPoliticalDetails'
             required:
               - evp_id
               - vetting_class
@@ -1537,7 +1620,7 @@ components:
       maxLength: 50
     SharingStatus:
       description: >-
-        Sharing Status. Please refer to the /enum endpoint for an update list of
+        Sharing Status. Please refer to the [/enum](#enums) endpoint for an update list of
         valid values.
       type: string
       maxLength: 50
@@ -1547,7 +1630,7 @@ components:
         - DECLINED
     CnpID:
       description: >-
-        CNP ID. Please refer to the /enum endpoint for an update list of valid
+        CNP ID. Please refer to the [/enum](#enums) endpoint for an update list of valid
         values.
       type: string
       maxLength: 50
@@ -1785,7 +1868,7 @@ components:
           description: |
             Entity type behind the brand.
             This is the form of business establishment.
-            Please refer to the /enum endpoint for an update list of valid values.
+            Please refer to the [/enum](#enums) endpoint for an update list of valid values.
           example:
             $ref: "#/components/examples/BrandVonage/value/entity_type"
         website:
@@ -1956,34 +2039,7 @@ components:
       properties:
         account_id:
           $ref: "#/components/schemas/AccountID"
-        vertical:
-          type: string
-          description:
-            Business/industry segment of this campaign. (Required if entity_type !=
-            SOLE_PROPRIETOR). Please refer to the /enum endpoint for an update list
-            of valid values.
-          maxLength: 50
-          enum:
-            - UNKNOWN
-            - REAL_ESTATE
-            - HEALTHCARE
-            - ENERGY
-            - ENTERTAINMENT
-            - RETAIL
-            - AGRICULTURE
-            - INSURANCE
-            - EDUCATION
-            - HOSPITALITY
-            - FINANCIAL
-            - GAMBLING
-            - CONSTRUCTION
-            - NGO
-            - MANUFACTURING
-            - GOVERNMENT
-            - TECHNOLOGY
-            - COMMUNICATION
-          example:
-            $ref: "#/components/examples/Campaign/value/vertical"
+
         usecase:
           type: string
           description: Campaign usecase
@@ -2042,18 +2098,21 @@ components:
             $ref: "#/components/examples/Campaign/value/sub_usecases"
         reseller_id:
           type: string
-          description: Alphanumeric identifier of the reseller that you want to associate with this campaign
+          description: Alphanumeric identifier of the reseller that you want to associate with this campaign. This is **required** when creating a campaign on behalf of another company or entity.
           maxLength: 8
           example:
             $ref: "#/components/examples/Campaign/value/reseller_id"
         description:
           type: string
           description: Summary description of this campaign
+          minLength: 40
           example:
             $ref: "#/components/examples/Campaign/value/description"
         embedded_link:
           type: boolean
-          description: Does message generated by the campaign include URL link in SMS?
+          description: |
+           Set to `true` if the campaign message includes links.
+           **NB:** [Shortened URLs](https://en.wikipedia.org/wiki/URL_shortening) are forbidden.
           example:
             $ref: "#/components/examples/Campaign/value/embedded_link"
         embedded_phone:
@@ -2063,17 +2122,20 @@ components:
             $ref: "#/components/examples/Campaign/value/embedded_phone"
         number_pool:
           type: boolean
-          description: Does campaign utilize pool of phone numbers?
+          description: Set to `true` if campaign uses a pool of numbers.
           example:
             $ref: "#/components/examples/Campaign/value/number_pool"
         age_gated:
           type: boolean
-          description: Age gated message content in campaign.
+          description: |
+            Subscribers will be required to provide their age to opt-in if set to `true`.
+            **NB:** Sex, Hate, Alcohol, Firearms, and Tobacco related (S.H.A.F.T) messages are prohibited.
           example:
             $ref: "#/components/examples/Campaign/value/age_gated"
         direct_lending:
           type: boolean
-          description: Direct lending or loan arrangement
+          description: | 
+            Set to `true` if messages are related to money lending or loan arrangements. 
           example:
             $ref: "#/components/examples/Campaign/value/direct_lending"
         subscriber_opt_in:
@@ -2123,7 +2185,8 @@ components:
             $ref: "#/components/examples/Campaign/value/sample_five"
         message_flow:
           type: string
-          description: Message flow description
+          description: Describes what the `opt_in` option was used for.
+          minLength: 40
           maxLength: 2048
           example:
             $ref: "#/components/examples/Campaign/value/message_flow"
@@ -2136,11 +2199,30 @@ components:
           maxLength: 255
           example:
             $ref: "#/components/examples/Campaign/value/help_message"
-        affiliate_marketing:
-          type: boolean
-          description: Does message content controlled by affiliate marketing other than the brand?
+        opt_in_message:
+          description: >
+            Opt in message sent to confirmation enrollment to a recurring message campaign. Also provide information on how to get `HELP` or undo enrollment.
+            If consumers can text in a keyword,the response should include the Brand name.
+            <br>
+            **NB: Required if recipient opted in via SMS**
+          type: string
+          minLength: 20
+          maxLength: 255
           example:
-            $ref: "#/components/examples/Campaign/value/affiliate_marketing"
+            $ref: "#/components/examples/Campaign/value/opt_in_message"
+        opt_out_message:
+          description: >
+            Opt out message of the campaign.
+            The response to the `STOP` keyword may include the Brand name but should
+            include an acknowledgement of the opt-out request and confirmation that no further
+            messages will be sent.
+            <br>
+            **NB: Required if recipient opted in via SMS**
+          type: string
+          minLength: 20
+          maxLength: 255
+          example:
+            $ref: "#/components/examples/Campaign/value/opt_out_message"
 
     CampaignEditableFields:
       description: Fields that are editable for a campaign
@@ -2178,14 +2260,31 @@ components:
           type: string
           example:
             $ref: "#/components/examples/Campaign/value/message_flow"
-        help_message:
+        opt_in_keywords:
+          description: |
+            Opt in keywords for the campaign, separated by commas(,).
+            This is required if the `subscriber_opt_in` parameter is set.
           type: string
+          maxLength: 255
           example:
-            $ref: "#/components/examples/Campaign/value/help_message"
-        auto_renewal:
-          type: boolean
+            $ref: "#/components/examples/Campaign/value/opt_in_keywords"
+        opt_out_keywords:
+          description: |
+            Opt out keywords for the campaign, separated by commas(,).
+          type: string
+          maxLength: 255
+          default: STOP
           example:
-            $ref: "#/components/examples/Campaign/value/auto_renewal"
+            $ref: "#/components/examples/Campaign/value/opt_out_keywords"
+        help_keywords:
+          description: |
+            Help keywords for the campaign, separated by commas(,).
+          type: string
+          minLength: 20
+          maxLength: 255
+          default: HELP
+          example:
+            $ref: "#/components/examples/Campaign/value/help_keywords"
 
     CampaignSystemFields:
       description: Fields that are added by the system for a campaign
@@ -2208,6 +2307,12 @@ components:
       type: string
       pattern: ^[0-9A-F]{7}$
 
+    TCRCampaignID:
+      description: TCR Campaign ID.
+      type: string
+      maxLength: 50
+      example: C123ABC
+
     CampaignResponse:
       allOf:
         - $ref: "#/components/schemas/CampaignBase"
@@ -2219,10 +2324,40 @@ components:
               $ref: "#/components/schemas/AccountID"
             campaign_id:
               $ref: "#/components/schemas/CampaignId"
+            tcr_campaign_id:
+              $ref: '#/components/schemas/TCRCampaignID'
+            tcr_status:
+              $ref: '#/components/schemas/TCRCampaignStatus'
             created_date:
               type: string
             last_updated:
               type: string
+            last_status_changes:
+              type: array
+              title: The last status changes
+              description: |
+                Lists the last changes of the status field.
+
+                **Note**: this is only an extract. Not all changes are listed here.
+              items:
+                type: object
+                properties:
+                  status:
+                    $ref: '#/components/schemas/CampaignStatus'
+                  explanation:
+                    type: string
+                    title: The explanation of the change.
+                    description: |
+                      Describes why the status changed how it did.
+                  change_date:
+                    type: string
+                    format: date-time
+                    title: Date-time when the status changed.
+                    description: Date-time when the status changed.
+                example:
+                  status: APPROVED
+                  reason: Approved after internal review.
+                  change_date: '2022-01-01 01:01:01'
             _links:
               type: object
               properties:
@@ -2250,6 +2385,14 @@ components:
       type: string
       example: ACTIVE
       enum:
+        - ACTIVE
+        - EXPIRED
+
+    TCRCampaignStatus:
+      description: Campaign TCR status.
+      type: string
+      enum:
+        - UNKNOWN
         - ACTIVE
         - EXPIRED
 
@@ -2400,7 +2543,12 @@ components:
         - REJECTED
         - SUSPENDED
         - REGISTERED
-
+    MNOIDs:
+      type: array
+      minItems: 1
+      items:
+        type: string
+      example: ["10017"]
     Number:
       description: Telephone Number
       example: "14155550110"
@@ -2625,7 +2773,6 @@ components:
                 example: '2022-08-01T14:26:25.862Z'  
 
           
-
     VettingRequest:
       type: object
       properties:
@@ -2644,13 +2791,60 @@ components:
         vetting_class:
           type: string
         vetting_status:
+          description: >-
+            Identifies the vetting request status. Please refer to the /enum
+            endpoint for an updated list of valid values.
           type: string
+          readOnly: true
+          enum:
+            - PENDING
+            - UNSCORE
+            - ACTIVE
+            - FAILED
+            - EXPIRED
+        vetting_details:
+          $ref: '#/components/schemas/VettingDetails'
         vetted_date:
+          description: >-
+            Vetting effective date. This is the date when vetting was completed,
+            or the starting effective date. If this date is missing, then the
+            vetting was not complete or not valid.
           type: string
           format: date-time
         create_date:
           type: string
           format: date-time
+        additional_info:
+          $ref: '#/components/schemas/VettingAdditionalInfo'
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: "https://api.nexmo.com/v1/10dlc/brands/BLQKOPK/vetting/requests/abcd1234"
+            brand:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: "https://api.nexmo.com/v1/10dlc/brands/BLQKOPK"
+
+    ResubmitCampaignResponseSchema:
+      type: object
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/CampaignId"
+        brand_id:
+          $ref: "#/components/schemas/BrandId"
+        mno_metadata:
+          type: array
+          items:
+            $ref: "#/components/schemas/UseCaseMNOMetadata"
+          example:
+            $ref: "#/components/examples/ValidUseCase/value/mno_metadata"
         _links:
           type: object
           properties:
@@ -2752,7 +2946,255 @@ components:
                     - type: number
                     - type: boolean
                     - type: integer
-
+    VettingPoliticalDetails:
+      description: >-
+        Additional political details in json format, required for POLITICAL type
+        vetting. If non-POLITICAL type its neglected.
+      type: object
+      properties:
+        requestor_first_name:
+          description: First name of vetting requester.
+          type: string
+          example: John
+        requestor_last_name:
+          description: Last name of vetting requester.
+          type: string
+          example: Doe
+        locale:
+          description: Locale.
+          type: string
+          enum:
+            - Federal
+            - State
+            - Local
+            - Tribal
+          example: Federal
+        fec_committee_type_code:
+          description: Committee type codes.
+          type: string
+          enum:
+            - C
+            - D
+            - E
+            - H
+            - I
+            - 'N'
+            - O
+            - P
+            - Q
+            - S
+            - U
+            - V
+            - W
+            - X
+            - 'Y'
+            - Z
+          example: C
+        committee_id:
+          description: >-
+            Free text field. The committee/campaign ID issued for Federal and
+            any other locale - if not issued, enter "00000".
+          type: string
+          example: "00000"
+        candidate_type:
+          description: >-
+            Free text field. Required for campaigns. If committee is not
+            candidate-specific, enter "PAC".
+          type: string
+          example: "PAC"
+        state_local_committee_type:
+          description: >-
+            Free text field. Required for State, Local, and Tribal -- if
+            Federal, enter "FEDERAL".
+          type: string
+          example: "FEDERAL"
+        local_committee_state:
+          description: >-
+            If Federal Congress, enter the state(2 letter code) to be
+            represented; if President, enter "US".
+          type: string
+          example: AZ
+        local_committee_municipality:
+          description: >-
+            Free text field. If Federal Congress, enter district to be
+            represented; if President, enter "US".
+          type: string
+          example: "US"
+        tribal_location:
+          description: Free text field. If non-tribal, enter "US".
+          type: string
+          example: "US"
+        filing_url:
+          description: >-
+            Should be a valid URL format. Election authority website URL where
+            the filing information can be found.
+          type: string
+          example: "https://example.com"
+        filing_record_url_instructions:
+          description: >-
+            Free text field. Additional instructions to aid in locating the
+            filing record.
+          type: string
+          example: Additional instructions
+        filing_email:
+          description: >-
+            Free text field. Exactly as filed with election authority. If not
+            supplied, PIN cannot be sent via email.
+          type: string
+          example: john@email.com
+        election_date:
+          description: Date string in the format yyyy-dd-mm. Must be in the future.
+          type: string
+          example: '2022-31-10'
+        pin_preference:
+          description: Pin preference.
+          type: string
+          enum:
+            - Regular
+            - Express
+            - Email
+          example: Regular
+      required:
+        - requestor_first_name
+        - requestor_last_name
+        - locale
+        - fec_committee_type_code
+        - committee_id
+        - candidate_type
+        - state_local_committee_type
+        - local_committee_state
+        - local_committee_municipality
+        - tribal_location
+        - filing_url
+        - election_date
+        - pin_preference
+    VettingAdditionalInfo:
+      description: >-
+        Additional brand information in json format. Required for POLITICAL type
+        vets.
+      type: object
+      properties:
+        requestor_first_name:
+          description: First name of vetting requester.
+          type: string
+          example: John
+        requestor_last_name:
+          description: Last name of vetting requester.
+          type: string
+          example: Doe
+        locale:
+          description: Locale.
+          type: string
+          enum:
+            - Federal
+            - State
+            - Local
+            - Tribal
+          example: Federal
+        fec_committee_type_code:
+          description: Committee type codes.
+          type: string
+          enum:
+            - C
+            - D
+            - E
+            - H
+            - I
+            - 'N'
+            - O
+            - P
+            - Q
+            - S
+            - U
+            - V
+            - W
+            - X
+            - 'Y'
+            - Z
+          example: C
+        committee_id:
+          description: >-
+            Free text field. The committee/campaign ID issued for Federal and
+            any other locale - if not issued, enter "00000".
+          type: string
+          example: "00000"
+        candidate_type:
+          description: >-
+            Free text field. Required for campaigns. If committee is not
+            candidate-specific, enter "PAC".
+          type: string
+          example: "PAC"
+        state_local_committee_type:
+          description: >-
+            Free text field. Required for State, Local, and Tribal -- if
+            Federal, enter "FEDERAL".
+          type: string
+          example: "FEDERAL"
+        local_committee_state:
+          description: >-
+            If Federal Congress, enter the state(2 letter code) to be
+            represented; if President, enter "US".
+          type: string
+          example: AZ
+        local_committee_municipality:
+          description: >-
+            Free text field. If Federal Congress, enter district to be
+            represented; if President, enter "US".
+          type: string
+          example: "US"
+        tribal_location:
+          description: Free text field. If non-tribal, enter "US".
+          type: string
+          example: "US"
+        filing_url:
+          description: >-
+            Should be a valid URL format. Election authority website URL where
+            the filing information can be found.
+          type: string
+          example: "https://example.com"
+        filing_record_url_instructions:
+          description: >-
+            Free text field. Additional instructions to aid in locating the
+            filing record.
+          type: string
+          example: "Additional instructions"
+        filing_email:
+          description: >-
+            Free text field. Exactly as filed with election authority. If not
+            supplied, PIN cannot be sent via email.
+          type: string
+          example: "John@email.com"
+        election_date:
+          description: Date string in the format yyyy-dd-mm. Must be in the future.
+          type: string
+          example: '2022-31-10'
+        pin_preference:
+          description: Pin preference.
+          type: string
+          enum:
+            - Regular
+            - Express
+            - Email
+          example: Regular
+      required:
+        - requestor_first_name
+        - requestor_last_name
+        - locale
+        - fec_committee_type_code
+        - committee_id
+        - candidate_type
+        - state_local_committee_type
+        - local_committee_state
+        - local_committee_municipality
+        - tribal_location
+        - filing_url
+        - election_date
+        - pin_preference
+    VettingDetails:
+      type: object
+      description: >-
+        Collection of non-standard attributes (key-value pairs), applicable to
+        some vetting records.
   securitySchemes:
     basicAuth:
       type: http
@@ -2857,6 +3299,8 @@ tags:
     description: APIs relating to working with Campaigns
   - name: Numbers
     description: APIs relating to working with Numbers in Campaigns
+  - name: Enums
+    description: The list of values available for enum properties across all APIs
 
 x-errors:
   brand-conflict:
