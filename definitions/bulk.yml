@@ -36,7 +36,6 @@ security:
 paths:
   /lists:
     get:
-      # todo: change all operations to use the resource first
       operationId: listsFindAll
       summary: Find all lists
       parameters:
@@ -55,6 +54,8 @@ paths:
       operationId: listsCreate
       summary: Create list
       parameters: [ ]
+      tags:
+        - lists
       requestBody:
         $ref: "#/components/requestBodies/ListRequest"
       responses:
@@ -68,8 +69,6 @@ paths:
           $ref: "#/components/responses/ErrorConflict"
         "422":
           $ref: "#/components/responses/ErrorResourceLimitReached"
-      tags:
-        - lists
   /lists/{list_id}:
     parameters:
       - $ref: "#/components/parameters/ListId"
@@ -494,6 +493,7 @@ paths:
           $ref: "common/common_errors.yml#/components/responses/NotFoundError"
       tags:
         - runs
+
   /runs/{run_id}/events:
     parameters:
       - $ref: "#/components/parameters/RunId"
@@ -625,16 +625,24 @@ components:
 
   requestBodies:
     ListRequest:
+      description: List definition
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ListEditableFields"
-          examples:
-            manual:
-              $ref: "#/components/examples/ListManualRequestExample"
-            salesforce:
-              $ref: "#/components/examples/ListSalesforceRequestExample"
+            oneOf:
+              - allOf:
+                  - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+                  - $ref: "#/components/schemas/ListEditableFields"
+                  - $ref: "#/components/schemas/ListDatasourceManual"
+                  - description: Manual
+                    x-tab-id: Manual
+              - allOf:
+                  - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+                  - $ref: "#/components/schemas/ListEditableFields"
+                  - $ref: "#/components/schemas/ListDatasourceSalesforce"
+                  - description: Salesforce
+                    x-tab-id: Salesforce
 
     ItemRequest:
       required: true
@@ -642,9 +650,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ItemEditableFields"
-          examples:
-            simple:
-              $ref: "#/components/examples/ItemRequestExample"
 
     ItemImportRequest:
       content:
@@ -662,21 +667,35 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ActionEditableFields"
+            oneOf:
+              - allOf:
+                  - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+                  - $ref: "#/components/schemas/ActionEditableFields"
+                  - $ref: "#/components/schemas/ActionHttpApiInvoke"
+                  - description: HttpApiInvoke
+                    x-tab-id: HttpApiInvoke
 
     JobRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/JobEditableFields"
+            oneOf:
+              - allOf:
+                  - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+                  - $ref: "#/components/schemas/JobEditableFields"
+                  - $ref: "#/components/schemas/JobSegmentation"
+                  - description: Segmentation
+                    x-tab-id: Segmentation
 
     RunRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/RunEditableFields"
+            allOf:
+              - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+              - $ref: "#/components/schemas/RunEditableFields"
 
   responses:
     AcceptedResponse:
@@ -729,20 +748,28 @@ components:
                   value: 10
 
     ListResponse:
-      description: "List response"
+      description: List response
       content:
         application/json:
           schema:
-            allOf:
-              - $ref: "#/components/schemas/ListDto"
-              - type: object
-                example:
-                  $ref: "#/components/examples/ListManualResponseExample/value"
-          examples:
-            manual:
-              $ref: "#/components/examples/ListManualResponseExample"
-            salesforce:
-              $ref: "#/components/examples/ListSalesforceResponseExample"
+            type: object
+            oneOf:
+              - allOf:
+                  - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+                  - $ref: "#/components/schemas/ListEditableFields"
+                  - $ref: "#/components/schemas/ListDatasourceManual"
+                  - $ref: "#/components/schemas/BulkBase"
+                  - $ref: "#/components/schemas/ListSystemFields"
+                  - description: Manual
+                    x-tab-id: Manual
+              - allOf:
+                  - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+                  - $ref: "#/components/schemas/ListEditableFields"
+                  - $ref: "#/components/schemas/ListDatasourceSalesforce"
+                  - $ref: "#/components/schemas/BulkBase"
+                  - $ref: "#/components/schemas/ListSystemFields"
+                  - description: Salesforce
+                    x-tab-id: Salesforce
 
     ListsPagedResponse:
       description: Lists paged response
@@ -761,7 +788,8 @@ components:
                         type: array
                         readOnly: true
                         items:
-                          $ref: "#/components/schemas/ListDto"
+                          # todo: how to document response is a mix of list types
+                          type: object
                 example:
                   page: 1
                   page_size: 100
@@ -824,9 +852,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ListItemDto"
-          examples:
-            simple:
-              $ref: "#/components/examples/ItemsResponseExample"
 
     ItemsPagedResponse:
       description: Items paged response
@@ -917,7 +942,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ActionDto"
+            allOf:
+              - $ref: "#/components/schemas/BulkBase"
+              - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+              - $ref: "#/components/schemas/ActionEditableFields"
+              - $ref: "#/components/schemas/ActionHttpApiInvoke"
+              - description: HttpApiInvoke
+                x-tab-id: HttpApiInvoke
 
     ActionsPagedResponse:
       description: Actions paged response
@@ -936,7 +967,7 @@ components:
                         type: array
                         readOnly: true
                         items:
-                          $ref: "#/components/schemas/ActionDto"
+                          type: object
                 example:
                   total_items: 1
                   page: 1
@@ -1022,10 +1053,14 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/JobDto"
-          examples:
-            simple:
-              $ref: "#/components/examples/JobResponseExample"
+            oneOf:
+              - allOf:
+                  - $ref: "#/components/schemas/BulkBase"
+                  - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
+                  - $ref: "#/components/schemas/JobEditableFields"
+                  - $ref: "#/components/schemas/JobSegmentation"
+                  - description: Segmentation
+                    x-tab-id: Segmentation
 
     JobsPagedResponse:
       description: Jobs paged response
@@ -1044,7 +1079,7 @@ components:
                         type: array
                         readOnly: true
                         items:
-                          $ref: "#/components/schemas/JobDto"
+                          type: object
                 example:
                   total_items: 1
                   page: 1
@@ -1248,10 +1283,10 @@ components:
                         job_id: c68e871a-c239-474d-a905-7b95f4563b7e
                         src_ctx: et-e4ab4b75-9e7c-4f26-9328-394a5b842648
                         data:
-                          from: "15053939008"
-                          text: Dima
+                          from: "441632960411"
+                          text: Erin J. Yearby
                         run_id: 7d0d4e5f-6453-4c63-87cf-f95b04377324
-                        recipient_id: "15053939008"
+                        recipient_id: "441632960758"
 
   schemas:
     Href:
@@ -1396,14 +1431,20 @@ components:
       format: uuid
       example: 51aca838-2cf6-4100-b0d2-e74ac0e95c88
 
-    Tags:
+    ClientRef:
+      description: Client reference of up to 100 characters. The reference will be present in every relevant event.
+      type: string
+      maximum: 100
+      example: c4ad1a21-56ef-4a75-8dc9-0d2b2449c794
+
+    Tag:
       description: up to 10 custom strings assigned with a resource - each must be between 1 and 15 characters
       type: array
       minItems: 0
       maxItems: 10
       items:
         type: string
-      example: [ 'vip', 'holiday' ]
+      example: [ 'vip', 'sport' ]
 
     BulkBase:
       description: Common attributes of any Bulk API resource
@@ -1425,7 +1466,7 @@ components:
           readOnly: true
           example: "2022-06-19T17:59:28.085Z"
 
-    ResourceNameAndDescription:
+    ResourceNameDescriptionAndTag:
       description: define the name and description attributes for any resource
       type: object
       properties:
@@ -1439,6 +1480,8 @@ components:
           type: string
           maxLength: 1024
           example: my description
+        tags:
+          $ref: "#/components/schemas/Tag"
       required:
         - name
 
@@ -1462,38 +1505,40 @@ components:
       required:
         - name
 
-    ListDatasourceTypeEnum:
-      type: string
-      enum:
-        - manual
-        - salesforce
-      default: manual
-      example: salesforce
-
-    ListDatasourceBase:
+    ListEditableFields:
       type: object
       properties:
-        type:
-          $ref: "#/components/schemas/ListDatasourceTypeEnum"
-      required:
-        - type
-      discriminator:
-        propertyName: type
+        attributes:
+          minItems: 0
+          maxItems: 50
+          type: array
+          items:
+            $ref: "#/components/schemas/ListAttribute"
 
     ListDatasourceManual:
-      allOf:
-        - $ref: "#/components/schemas/ListDatasourceBase"
-        - type: object
+      type: object
+      properties:
+        datasource:
+          description: Manual datasource
+          type: object
           properties:
             type:
+              type: string
+              enum:
+                - manual
               example: manual
 
     ListDatasourceSalesforce:
-      allOf:
-        - $ref: "#/components/schemas/ListDatasourceBase"
-        - type: object
+      type: object
+      properties:
+        datasource:
+          description: Salesforce datasource
+          type: object
           properties:
             type:
+              type: string
+              enum:
+                - salesforce
               example: salesforce
             integration_id:
               description: integration id defining salesforce credential to use for this datasource
@@ -1506,27 +1551,6 @@ components:
           required:
             - integration_id
             - soql
-
-    ListEditableFields:
-      description: Fields that are editable for a list
-      allOf:
-        - $ref: "#/components/schemas/ResourceNameAndDescription"
-        - type: object
-          properties:
-            tags:
-              $ref: "#/components/schemas/Tags"
-            attributes:
-              minItems: 0
-              maxItems: 50
-              type: array
-              items:
-                $ref: "#/components/schemas/ListAttribute"
-            datasource:
-              discriminator:
-                propertyName: type
-              oneOf:
-                - $ref: "#/components/schemas/ListDatasourceManual"
-                - $ref: "#/components/schemas/ListDatasourceSalesforce"
 
     ListSyncStatusEnum:
       description: sync status enumeration
@@ -1576,13 +1600,6 @@ components:
           type: number
           example: 500
 
-    ListDto:
-      description: List resource
-      allOf:
-        - $ref: "#/components/schemas/BulkBase"
-        - $ref: "#/components/schemas/ListEditableFields"
-        - $ref: "#/components/schemas/ListSystemFields"
-
     ItemEditableFields:
       description: Fields that are editable for an item
       type: object
@@ -1598,6 +1615,15 @@ components:
             phone: 15550067383
       required:
         - data
+
+    ItemEmbedded:
+      type: object
+      additionalProperties: true
+      minProperties: 1
+      example:
+        firstName: Adrianna
+        lastName: Campbell
+        phone: 15550067383
 
     ItemSystemFields:
       description: Fields that are added to a list item by the system
@@ -1629,22 +1655,29 @@ components:
       type: string
       minLength: 1
       maxLength: 50
+      pattern: ^[A-Za-z0-9_-]*$
       example: from_number
 
     ParameterDto:
-      allOf:
-        - $ref: "#/components/schemas/ResourceNameAndDescription"
-        - type: object
-          properties:
-            type:
-              $ref: "#/components/schemas/ParameterTypeEnum"
-            default:
-              type: string
-              example: Trevor S. Wallace
-            required:
-              type: boolean
-              default: true
-              example: false
+      description: parameters definition
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ParameterName"
+        type:
+          $ref: "#/components/schemas/ParameterTypeEnum"
+        default:
+          type: string
+          example: '15554764733'
+        description:
+          description: the description of the resource
+          type: string
+          maxLength: 1024
+          example: number the sms is sent from
+        required:
+          type: boolean
+          default: true
+          example: false
 
     HttpApiInvokeResponseStatus:
       type: object
@@ -1716,34 +1749,21 @@ components:
           $ref: "#/components/schemas/ParameterName"
         value:
           type: string
-          example: "15554764733"
+          example: '15554764733'
       required:
         - name
         - value
 
-    ActionCommandTypeEnum:
-      type: string
-      enum:
-        - http-api-invoke
-      default: http-api-invoke
-      example: http-api-invoke
-
-    ActionCommandBase:
-      type: object
-      properties:
-        type:
-          $ref: "#/components/schemas/ActionCommandTypeEnum"
-      required:
-        - type
-      discriminator:
-        propertyName: type
-
-    HttpApiInvokeCommand:
+    ActionHttpApiInvoke:
       description: define attributes to execute an http action
-      x-tab-id: HttpApiInvoke
-      allOf:
-        - $ref: "#/components/schemas/ActionCommandBase"
-        - type: object
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: object
+          required:
+            - url
           properties:
             type:
               type: string
@@ -1786,40 +1806,20 @@ components:
                   $ref: "#/components/schemas/HttpResponseDetails"
                 async:
                   $ref: "#/components/schemas/HttpResponseDetails"
-          required:
-            - url
 
     ActionEditableFields:
-      description: Fields that are editable for an action
-      allOf:
-        - $ref: "#/components/schemas/ResourceNameAndDescription"
-        - type: object
-          properties:
-            parameters:
-              type: array
-              items:
-                $ref: "#/components/schemas/ParameterDto"
-            command:
-              discriminator:
-                propertyName: type
-              type: object
-              properties:
-                $ref: "#/components/schemas/HttpApiInvokeCommand"
-              example:
-                $ref: "#/components/examples/ActionSendSMSRequestExample/value/command"
-            timeout_seconds:
-              type: number
-              default: 5
-              minimum: 0
-              maximum: 60
-              example: 5
-          required:
-            - command
-
-    ActionDto:
-      allOf:
-        - $ref: "#/components/schemas/BulkBase"
-        - $ref: "#/components/schemas/ActionEditableFields"
+      type: object
+      properties:
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterDto"
+        timeout_seconds:
+          type: number
+          default: 5
+          minimum: 0
+          maximum: 60
+          example: 5
 
     ListRef:
       type: object
@@ -1835,7 +1835,26 @@ components:
         - id
         - type
 
-    Recipients:
+    RecipientsEmbedded:
+      type: object
+      properties:
+        embedded:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            $ref: "#/components/schemas/ItemEmbedded"
+          example:
+            - phoneNumber: 2025550183
+              firstName: Mary
+              personalLink: 3gpNYkV
+            - phoneNumber: 2025550101
+              firstName: Allen
+              personalLink: 2kZMoG8
+      required:
+        - embedded
+
+    RecipientsListsRef:
       type: object
       properties:
         include:
@@ -1844,15 +1863,19 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ListRef"
-          example:
-            - type: list
-              id: 42a5313b-ea90-4166-a950-00eb6f95dfef
         exclude:
           minItems: 1
           maxItems: 10
           type: array
           items:
             $ref: "#/components/schemas/ListRef"
+      example:
+        include:
+          - type: list
+            id: 42a5313b-ea90-4166-a950-00eb6f95dfef
+        exclude:
+          - type: list
+            id: 42a5313b-ea90-4166-a950-00eb6f95dfef
       required:
         - include
 
@@ -1913,11 +1936,11 @@ components:
     Rule:
       type: object
       properties:
-        # todo: use allOf with $ref: "#/components/schemas/ResourceNameAndDescription"
         name:
           description: the name of the resource
           type: string
           maxLength: 255
+          example: uk customers
         description:
           description: the description of the resource
           type: string
@@ -1954,29 +1977,14 @@ components:
       required:
         - matchers
 
-    JobTypeEnum:
-      type: string
-      default: segmentation-job
-      enum:
-        - segmentation-job
-      example: segmentation-job
-
-    JobDefinitionBase:
-      type: object
-      properties:
-        type:
-          $ref: "#/components/schemas/JobTypeEnum"
-      required:
-        - type
-      discriminator:
-        propertyName: type
-
-    SegmentationJobDto:
+    JobSegmentation:
       description: define segmentation job attributes
-      x-tab-id: segmentation-job
-      allOf:
-        - $ref: "#/components/schemas/JobDefinitionBase"
-        - type: object
+      type: object
+      required:
+        - definition
+      properties:
+        definition:
+          type: object
           properties:
             type:
               type: string
@@ -1985,7 +1993,7 @@ components:
               default: segmentation-job
               example: segmentation-job
             recipients:
-              $ref: "#/components/schemas/Recipients"
+              $ref: "#/components/schemas/RecipientsListsRef"
             segmentations:
               type: array
               items:
@@ -1993,59 +2001,50 @@ components:
             events_handler:
               $ref: "#/components/schemas/EventsHandler"
           required:
-            - recipients
             - segmentations
-      discriminator:
-        propertyName: type
 
     JobEditableFields:
-      description: Fields that are editable for a job
-      allOf:
-        - $ref: "#/components/schemas/ResourceNameAndDescription"
-        - type: object
-          properties:
-            tags:
-              $ref: "#/components/schemas/Tags"
-            definition:
-              discriminator:
-                propertyName: type
-              type: object
-              properties:
-                $ref: "#/components/schemas/SegmentationJobDto"
-              example:
-                $ref: "#/components/examples/JobSegmentationRequestExample/value/definition"
-
-    JobDto:
-      allOf:
-        - $ref: "#/components/schemas/BulkBase"
-        - $ref: "#/components/schemas/JobEditableFields"
+      type: object
+      properties:
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterDto"
 
     RunEditableFields:
       description: Fields that are editable for a run
-      allOf:
-        - $ref: "#/components/schemas/ResourceNameAndDescription"
-        - type: object
+      type: object
+      properties:
+        job_id:
+          $ref: "#/components/schemas/JobId"
+        parameters:
+          maxItems: 20
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterValue"
+          example:
+            - name: fromNumber
+              value: "447418365541"
+            - name: message
+              value: "Hi {{ item.firstName }}, click https://bit.ly/{{ item.personalLink }} for your special deals."
+        client_ref:
+          $ref: "#/components/schemas/ClientRef"
+        schedule:
+          type: object
           properties:
-            tags:
-              $ref: "#/components/schemas/Tags"
-            job_id:
-              $ref: "#/components/schemas/JobId"
-            schedule:
-              type: object
-              properties:
-                start_at:
-                  type: string
-                  format: date-time
-                  example: "2022-06-06T05:46:00.936Z"
-                end_at:
-                  type: string
-                  format: date-time
-                  example: "2022-06-20T05:46:00.936Z"
-              required:
-                - start_at
+            start_at:
+              type: string
+              format: date-time
+              example: "2022-06-06T05:46:00.936Z"
+            end_at:
+              type: string
+              format: date-time
+              example: "2022-06-20T05:46:00.936Z"
           required:
-            - job_id
-            - schedule
+            - start_at
+      required:
+        - job_id
+        - schedule
 
     RunStatusEnum:
       type: string
@@ -2080,6 +2079,7 @@ components:
     RunDto:
       allOf:
         - $ref: "#/components/schemas/BulkBase"
+        - $ref: "#/components/schemas/ResourceNameDescriptionAndTag"
         - $ref: "#/components/schemas/RunEditableFields"
         - $ref: "#/components/schemas/RunSystemFields"
 
@@ -2358,16 +2358,6 @@ components:
         id: 4cb98f71-a879-49f7-b5cf-2314353eb52c
         created_at: "2022-08-02T13:22:04.267Z"
         updated_at: "2022-08-02T13:22:04.267Z"
-
-    ItemRequestExample:
-      value:
-        data:
-          Id: "0038d00000B22zbAAB"
-          Email: info@salesforce.com
-          Phone: "(415) 555-1212"
-          LastName: Minor
-          FirstName: Geoff
-          OtherCountry: Canada
 
     ItemsResponseExample:
       value:
