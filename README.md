@@ -35,9 +35,9 @@ These definitions provide a single point of truth that can be used end-to-end:
 
 We use [Spectral](https://stoplight.io/open-source/spectral/) to style and validity check our files. If you're using Stoplight Studio, this picks up our style definition by default. Otherwise, you can install the tool locally like this:
 
-Install node version. If using node version manger you can:
+Install NodeJS, if not already installed. If using node version manger (nvm) you can:
 ```
-nvm install && nvm use
+nvm use || nvm install
 ```
 
 Install node dependencies:
