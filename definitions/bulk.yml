@@ -6,13 +6,13 @@ info:
   contact:
     name: Vonage DevRel
     email: devrel@vonage.com
-    url: "https://developer.vonage.com/"
+    url: https://developer.vonage.com/
     x-twitter: Vonage
-  termsOfService: "https://www.nexmo.com/terms-of-use"
+  termsOfService: https://www.vonage.com/legal/communications-apis/terms-of-use/?icid=nexmo_rd
   license:
     name: The MIT License (MIT)
-    url: "https://opensource.org/licenses/MIT"
-  x-label: Alpha
+    url: https://opensource.org/licenses/MIT
+  x-label: Beta
 tags:
   - name: lists
     description: API to upload and manage a list of contacts
@@ -1491,11 +1491,13 @@ components:
         name:
           description: list attribute name
           type: string
+          pattern: ^[a-zA-Z_][a-zA-Z\d_]*$
           maxLength: 50
           example: phone_number
         alias:
           description: alternative name to use for this attribute. Use when you wish to correlate between 2 or more list that are using different attribute names for the same semantic data
           type: string
+          pattern: ^[a-zA-Z_][a-zA-Z\d_]*$
           maxLength: 50
           example: phone
         key:
@@ -1604,6 +1606,7 @@ components:
       description: Fields that are editable for an item
       type: object
       properties:
+        # todo: define the item data structure
         data:
           description: custom item data attributes
           type: object
@@ -1655,7 +1658,7 @@ components:
       type: string
       minLength: 1
       maxLength: 50
-      pattern: ^[A-Za-z0-9_-]*$
+      pattern: ^[a-zA-Z_][a-zA-Z\d_]*$
       example: from_number
 
     ParameterDto:
