@@ -41,6 +41,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
       responses:
         "200":
           $ref: "#/components/responses/ListsPagedResponse"
@@ -157,6 +158,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
       responses:
         "200":
           $ref: "#/components/responses/ItemsPagedResponse"
@@ -187,6 +189,7 @@ paths:
   /lists/{list_id}/items/download:
     parameters:
       - $ref: "#/components/parameters/ListId"
+      - $ref: "#/components/parameters/ResponseOrder"
     get:
       operationId: itemsDownload
       summary: Download list items as a CSV file format
@@ -271,6 +274,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
       responses:
         "200":
           $ref: "#/components/responses/ActionsPagedResponse"
@@ -352,6 +356,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
       responses:
         "200":
           $ref: "#/components/responses/JobsPagedResponse"
@@ -433,6 +438,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
         - $ref: "#/components/parameters/RunIdQuery"
         - $ref: "#/components/parameters/EventTypeQuery"
         - $ref: "#/components/parameters/ActionIdQuery"
@@ -461,6 +467,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
       responses:
         "200":
           $ref: "#/components/responses/RunsPagedResponse"
@@ -515,6 +522,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
         - $ref: "#/components/parameters/EventTypeQuery"
         - $ref: "#/components/parameters/ActionIdQuery"
         - $ref: "#/components/parameters/InvocationIdQuery"
@@ -546,6 +554,7 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/ResponseOrder"
         - $ref: "#/components/parameters/EventTypeQuery"
         - $ref: "#/components/parameters/ActionIdQuery"
         - $ref: "#/components/parameters/InvocationIdQuery"
@@ -709,6 +718,18 @@ components:
       schema:
         $ref: "#/components/schemas/RunId"
       example: run_id=<run uuid1>&run_id=<run uuid2>
+
+    ResponseOrder:
+      name: order
+      in: query
+      description: Sort in either ascending or descending order
+      schema:
+        type: string
+        default: asc
+        enum:
+          - asc
+          - desc
+      example: order=desc
 
     EventTypeQuery:
       name: type
