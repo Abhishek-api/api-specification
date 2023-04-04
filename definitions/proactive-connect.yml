@@ -434,16 +434,17 @@ paths:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
         - $ref: "#/components/parameters/RunIdQuery"
-        - $ref: "#/components/parameters/EventType"
+        - $ref: "#/components/parameters/EventTypeQuery"
         - $ref: "#/components/parameters/ActionIdQuery"
-        - $ref: "#/components/parameters/InvocationId"
-        - $ref: "#/components/parameters/RecipientId"
-        - $ref: "#/components/parameters/RunItemId"
-        - $ref: "#/components/parameters/SrcCtx"
-        - $ref: "#/components/parameters/SrcType"
-        - $ref: "#/components/parameters/TraceId"
-        - $ref: "#/components/parameters/DateStart"
-        - $ref: "#/components/parameters/DateEnd"
+#        - $ref: "#/components/parameters/JobIdQuery" todo: not supported yet
+        - $ref: "#/components/parameters/InvocationIdQuery"
+        - $ref: "#/components/parameters/RecipientIdQuery"
+        - $ref: "#/components/parameters/RunItemIdQuery"
+        - $ref: "#/components/parameters/SrcCtxQuery"
+        - $ref: "#/components/parameters/SrcTypeQuery"
+        - $ref: "#/components/parameters/TraceIdQuery"
+        - $ref: "#/components/parameters/DateStartQuery"
+        - $ref: "#/components/parameters/DateEndQuery"
       responses:
         "200":
           $ref: "#/components/responses/EventsPagedResponse"
@@ -514,16 +515,16 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
-        - $ref: "#/components/parameters/EventType"
+        - $ref: "#/components/parameters/EventTypeQuery"
         - $ref: "#/components/parameters/ActionIdQuery"
-        - $ref: "#/components/parameters/InvocationId"
-        - $ref: "#/components/parameters/RecipientId"
-        - $ref: "#/components/parameters/RunItemId"
-        - $ref: "#/components/parameters/SrcCtx"
-        - $ref: "#/components/parameters/SrcType"
-        - $ref: "#/components/parameters/TraceId"
-        - $ref: "#/components/parameters/DateStart"
-        - $ref: "#/components/parameters/DateEnd"
+        - $ref: "#/components/parameters/InvocationIdQuery"
+        - $ref: "#/components/parameters/RecipientIdQuery"
+        - $ref: "#/components/parameters/RunItemIdQuery"
+        - $ref: "#/components/parameters/SrcCtxQuery"
+        - $ref: "#/components/parameters/SrcTypeQuery"
+        - $ref: "#/components/parameters/TraceIdQuery"
+        - $ref: "#/components/parameters/DateStartQuery"
+        - $ref: "#/components/parameters/DateEndQuery"
       responses:
         "200":
           $ref: "#/components/responses/EventsPagedResponse"
@@ -545,16 +546,16 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
-        - $ref: "#/components/parameters/EventType"
+        - $ref: "#/components/parameters/EventTypeQuery"
         - $ref: "#/components/parameters/ActionIdQuery"
-        - $ref: "#/components/parameters/InvocationId"
-        - $ref: "#/components/parameters/RecipientId"
-        - $ref: "#/components/parameters/RunItemId"
-        - $ref: "#/components/parameters/SrcCtx"
-        - $ref: "#/components/parameters/SrcType"
-        - $ref: "#/components/parameters/TraceId"
-        - $ref: "#/components/parameters/DateStart"
-        - $ref: "#/components/parameters/DateEnd"
+        - $ref: "#/components/parameters/InvocationIdQuery"
+        - $ref: "#/components/parameters/RecipientIdQuery"
+        - $ref: "#/components/parameters/RunItemIdQuery"
+        - $ref: "#/components/parameters/SrcCtxQuery"
+        - $ref: "#/components/parameters/SrcTypeQuery"
+        - $ref: "#/components/parameters/TraceIdQuery"
+        - $ref: "#/components/parameters/DateStartQuery"
+        - $ref: "#/components/parameters/DateEndQuery"
       responses:
         "200":
           $ref: "#/components/responses/EventsPagedResponse"
@@ -663,10 +664,13 @@ components:
     ActionIdQuery:
       name: action_id
       in: query
-      description: Unique identifier for an action
-      required: true
+      description: |
+        Action IDs to filter by.
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/ActionId"
+      example: action_id=<action uuid1>&action_id=<action uuid2>
 
     JobId:
       name: job_id
@@ -675,6 +679,17 @@ components:
       required: true
       schema:
         $ref: "#/components/schemas/JobId"
+
+    JobIdQuery:
+      name: job_id
+      in: query
+      description: |
+        Job IDs to filter by
+
+        Can be specified multiple times.
+      schema:
+        $ref: "#/components/schemas/JobId"
+      example: job_id=<job uuid1>&job_id=<job uuid2>
 
     RunId:
       name: run_id
@@ -687,79 +702,101 @@ components:
     RunIdQuery:
       name: run_id
       in: query
-      description: Run IDs to filter by, if not specify, return all events for any run id
+      description: |
+        Run IDs to filter by, if not specify, return events for any run id
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/RunId"
+      example: run_id=<run uuid1>&run_id=<run uuid2>
 
-    EventType:
+    EventTypeQuery:
       name: type
       in: query
       description: Event types to filter by
       schema:
         $ref: "#/components/schemas/StatisticsEventType"
 
-    InvocationId:
+    InvocationIdQuery:
       name: invocation_id
       in: query
-      description: Invocation IDs to filter by
+      description: |
+        Invocation IDs to filter by
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/InvocationId"
+      example: invocation_id=<invocation uuid1>&invocation_id=<invocation uuid2>
 
-    RecipientId:
+    RecipientIdQuery:
       name: recipient_id
       in: query
-      description: Recipient IDs to filter by
+      description: |
+        Recipient IDs to filter by
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/RecipientId"
+      example: recipient_id=<recipient uuid1>&recipient_id=<recipient uuid2>
 
-    RunItemId:
+    RunItemIdQuery:
       name: run_item_id
       in: query
-      description: Run item IDs to filter by
+      description: |
+        Run item IDs to filter by
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/RunItemId"
 
-    SrcType:
+    SrcTypeQuery:
       name: src_type
       in: query
-      description: Source types to filter by
+      description: |
+        Source types to filter by
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/SrcType"
 
-    SrcCtx:
+    SrcCtxQuery:
       name: src_ctx
       in: query
-      description: the name of the segment / matcher the item / event to filter by (exact string)
+      description: |
+        The name of the segment / matcher the item / event to filter by (exact string)
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/SrcCtx"
 
-    TraceId:
+    TraceIdQuery:
       name: trace_id
       in: query
-      description: Trace IDs to filter events by
+      description: |
+        Trace IDs to filter events by
+
+        Can be specified multiple times.
       schema:
         $ref: "#/components/schemas/TraceId"
 
-    DateStart:
+    DateStartQuery:
       name: date_start
       in: query
-      description:
-        ISO-8601 formatted date for when to begin events filter.
+      description: ISO-8601 formatted date for when to begin events filter
       schema:
         type: string
         format: date
-        example: '2023-01-01T00:00:00+0000'
+      example: date_start='2023-01-01T00:00:00+0000'
 
-    DateEnd:
+    DateEndQuery:
       name: date_end
       in: query
       description:
-        ISO-8601 formatted date for when to end events filter.
-
+        ISO-8601 formatted date for when to end events filter
       schema:
         type: string
         format: date
-        example: '2023-01-01T00:00:00+0000'
+      example: date_end='2023-01-02T00:00:00+0000'
 
   requestBodies:
     ListRequest:
