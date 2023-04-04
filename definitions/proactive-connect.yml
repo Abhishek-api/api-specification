@@ -108,8 +108,8 @@ paths:
       operationId: listsDelete
       summary: Delete list
       responses:
-        "200":
-          $ref: "#/components/responses/ListResponse"
+        "204":
+          description: No Content
         "401":
           $ref: "common/common_errors.yml#/components/responses/JWTExpiredError"
         "404":
@@ -237,8 +237,8 @@ paths:
       operationId: itemsDelete
       summary: Delete list item
       responses:
-        "200":
-          $ref: "#/components/responses/ItemResponse"
+        "204":
+          description: No Content
         "401":
           $ref: "common/common_errors.yml#/components/responses/JWTExpiredError"
         "404":
@@ -335,8 +335,8 @@ paths:
       operationId: actionsDelete
       summary: Delete action by id
       responses:
-        "200":
-          $ref: "#/components/responses/ActionResponse"
+        "204":
+          description: No Content
         "400":
           $ref: "#/components/responses/ErrorBadRequest"
         "401":
@@ -416,8 +416,8 @@ paths:
       operationId: jobsDelete
       summary: Delete job
       responses:
-        "200":
-          $ref: "#/components/responses/JobResponse"
+        "204":
+          description: No Content
         "400":
           $ref: "#/components/responses/ErrorBadRequest"
         "401":
