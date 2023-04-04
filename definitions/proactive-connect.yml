@@ -436,7 +436,7 @@ paths:
         - $ref: "#/components/parameters/RunIdQuery"
         - $ref: "#/components/parameters/EventTypeQuery"
         - $ref: "#/components/parameters/ActionIdQuery"
-#        - $ref: "#/components/parameters/JobIdQuery" todo: not supported yet
+        #        - $ref: "#/components/parameters/JobIdQuery" todo: not supported yet
         - $ref: "#/components/parameters/InvocationIdQuery"
         - $ref: "#/components/parameters/RecipientIdQuery"
         - $ref: "#/components/parameters/RunItemIdQuery"
@@ -766,6 +766,7 @@ components:
         The name of the segment / matcher the item / event to filter by (exact string)
 
         Can be specified multiple times.
+      # todo: support /products?color=blue,green,red - see https://swagger.io/docs/specification/describing-parameters/
       schema:
         $ref: "#/components/schemas/SrcCtx"
 
