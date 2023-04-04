@@ -435,7 +435,7 @@ paths:
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
         - $ref: "#/components/parameters/RunIdQuery"
         - $ref: "#/components/parameters/EventType"
-        - $ref: "#/components/parameters/ActionId"
+        - $ref: "#/components/parameters/ActionIdQuery"
         - $ref: "#/components/parameters/InvocationId"
         - $ref: "#/components/parameters/RecipientId"
         - $ref: "#/components/parameters/RunItemId"
@@ -515,7 +515,7 @@ paths:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
         - $ref: "#/components/parameters/EventType"
-        - $ref: "#/components/parameters/ActionId"
+        - $ref: "#/components/parameters/ActionIdQuery"
         - $ref: "#/components/parameters/InvocationId"
         - $ref: "#/components/parameters/RecipientId"
         - $ref: "#/components/parameters/RunItemId"
@@ -540,13 +540,13 @@ paths:
     parameters:
       - $ref: "#/components/parameters/RunId"
     get:
-      operationId: runsEvents
+      operationId: runsEventsDownload
       summary: Download run events
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
         - $ref: "#/components/parameters/EventType"
-        - $ref: "#/components/parameters/ActionId"
+        - $ref: "#/components/parameters/ActionIdQuery"
         - $ref: "#/components/parameters/InvocationId"
         - $ref: "#/components/parameters/RecipientId"
         - $ref: "#/components/parameters/RunItemId"
@@ -655,6 +655,14 @@ components:
     ActionId:
       name: action_id
       in: path
+      description: Unique identifier for an action
+      required: true
+      schema:
+        $ref: "#/components/schemas/ActionId"
+
+    ActionIdQuery:
+      name: action_id
+      in: query
       description: Unique identifier for an action
       required: true
       schema:
