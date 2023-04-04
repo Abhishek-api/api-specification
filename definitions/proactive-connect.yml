@@ -433,6 +433,17 @@ paths:
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/RunIdQuery"
+        - $ref: "#/components/parameters/EventType"
+        - $ref: "#/components/parameters/ActionId"
+        - $ref: "#/components/parameters/InvocationId"
+        - $ref: "#/components/parameters/RecipientId"
+        - $ref: "#/components/parameters/RunItemId"
+        - $ref: "#/components/parameters/SrcCtx"
+        - $ref: "#/components/parameters/SrcType"
+        - $ref: "#/components/parameters/TraceId"
+        - $ref: "#/components/parameters/DateStart"
+        - $ref: "#/components/parameters/DateEnd"
       responses:
         "200":
           $ref: "#/components/responses/EventsPagedResponse"
@@ -499,10 +510,20 @@ paths:
       - $ref: "#/components/parameters/RunId"
     get:
       operationId: runsEvents
-      summary: Get job run events
+      summary: Get run events
       parameters:
         - $ref: "common/hal_structures.yml#/components/parameters/Page"
         - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/EventType"
+        - $ref: "#/components/parameters/ActionId"
+        - $ref: "#/components/parameters/InvocationId"
+        - $ref: "#/components/parameters/RecipientId"
+        - $ref: "#/components/parameters/RunItemId"
+        - $ref: "#/components/parameters/SrcCtx"
+        - $ref: "#/components/parameters/SrcType"
+        - $ref: "#/components/parameters/TraceId"
+        - $ref: "#/components/parameters/DateStart"
+        - $ref: "#/components/parameters/DateEnd"
       responses:
         "200":
           $ref: "#/components/responses/EventsPagedResponse"
@@ -514,6 +535,38 @@ paths:
           $ref: "common/common_errors.yml#/components/responses/NotFoundError"
       tags:
         - runs
+
+  /runs/{run_id}/events/download:
+    parameters:
+      - $ref: "#/components/parameters/RunId"
+    get:
+      operationId: runsEvents
+      summary: Download run events
+      parameters:
+        - $ref: "common/hal_structures.yml#/components/parameters/Page"
+        - $ref: "common/hal_structures.yml#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/EventType"
+        - $ref: "#/components/parameters/ActionId"
+        - $ref: "#/components/parameters/InvocationId"
+        - $ref: "#/components/parameters/RecipientId"
+        - $ref: "#/components/parameters/RunItemId"
+        - $ref: "#/components/parameters/SrcCtx"
+        - $ref: "#/components/parameters/SrcType"
+        - $ref: "#/components/parameters/TraceId"
+        - $ref: "#/components/parameters/DateStart"
+        - $ref: "#/components/parameters/DateEnd"
+      responses:
+        "200":
+          $ref: "#/components/responses/EventsPagedResponse"
+        "400":
+          $ref: "#/components/responses/ErrorBadRequest"
+        "401":
+          $ref: "common/common_errors.yml#/components/responses/JWTExpiredError"
+        "404":
+          $ref: "common/common_errors.yml#/components/responses/NotFoundError"
+      tags:
+        - runs
+
   /runs/{run_id}/summary:
     parameters:
       - $ref: "#/components/parameters/RunId"
@@ -622,6 +675,83 @@ components:
       required: true
       schema:
         $ref: "#/components/schemas/RunId"
+
+    RunIdQuery:
+      name: run_id
+      in: query
+      description: Run IDs to filter by, if not specify, return all events for any run id
+      schema:
+        $ref: "#/components/schemas/RunId"
+
+    EventType:
+      name: type
+      in: query
+      description: Event types to filter by
+      schema:
+        $ref: "#/components/schemas/StatisticsEventType"
+
+    InvocationId:
+      name: invocation_id
+      in: query
+      description: Invocation IDs to filter by
+      schema:
+        $ref: "#/components/schemas/InvocationId"
+
+    RecipientId:
+      name: recipient_id
+      in: query
+      description: Recipient IDs to filter by
+      schema:
+        $ref: "#/components/schemas/RecipientId"
+
+    RunItemId:
+      name: run_item_id
+      in: query
+      description: Run item IDs to filter by
+      schema:
+        $ref: "#/components/schemas/RunItemId"
+
+    SrcType:
+      name: src_type
+      in: query
+      description: Source types to filter by
+      schema:
+        $ref: "#/components/schemas/SrcType"
+
+    SrcCtx:
+      name: src_ctx
+      in: query
+      description: the name of the segment / matcher the item / event to filter by (exact string)
+      schema:
+        $ref: "#/components/schemas/SrcCtx"
+
+    TraceId:
+      name: trace_id
+      in: query
+      description: Trace IDs to filter events by
+      schema:
+        $ref: "#/components/schemas/TraceId"
+
+    DateStart:
+      name: date_start
+      in: query
+      description:
+        ISO-8601 formatted date for when to begin events filter.
+      schema:
+        type: string
+        format: date
+        example: '2023-01-01T00:00:00+0000'
+
+    DateEnd:
+      name: date_end
+      in: query
+      description:
+        ISO-8601 formatted date for when to end events filter.
+
+      schema:
+        type: string
+        format: date
+        example: '2023-01-01T00:00:00+0000'
 
   requestBodies:
     ListRequest:
@@ -1254,7 +1384,7 @@ components:
                         type: action-call-succeeded
                         id: e8e1eb4d-61e0-4099-8fa7-c96f1c0764ba
                         job_id: c68e871a-c239-474d-a905-7b95f4563b7e
-                        src_ctx: et-e4ab4b75-9e7c-4f26-9328-394a5b842648
+                        src_ctx: text uk customers
                         action_id: 26c5bbe2-113e-4201-bd93-f69e0a03d17f
                         data:
                           url: https://postman-echo.com/post
@@ -1281,7 +1411,7 @@ components:
                         type: recipient-response
                         id: 8c8e9894-81be-4f6e-88d4-046b6c70ff8c
                         job_id: c68e871a-c239-474d-a905-7b95f4563b7e
-                        src_ctx: et-e4ab4b75-9e7c-4f26-9328-394a5b842648
+                        src_ctx: text uk customers
                         data:
                           from: "441632960411"
                           text: Erin J. Yearby
@@ -1418,7 +1548,12 @@ components:
       description: Identifier of an action invocation
       type: string
       format: uuid
-      example: "{{ event.data.reqId }}"
+      example: 29bab76c-156e-42e4-ab38-f6a465f0048e
+
+    InvocationIdExpression:
+      description: Identifier of an action invocation
+      type: string
+      example: "{{ event.data.message_uuid }}"
 
     RecipientId:
       description: String identifier of a recipient, for example his email, phone number etc
@@ -1430,6 +1565,26 @@ components:
       type: string
       format: uuid
       example: 51aca838-2cf6-4100-b0d2-e74ac0e95c88
+
+    TraceId:
+      description: trace id associated with the events
+      type: string
+      example: 29bab76c-156e-42e4-ab38-f6a465f0048e
+
+    SrcType:
+      description: Indicate the run flow the event is generated for
+      type: string
+      enum:
+        - segmentation
+        - event-handler
+      example: segmentation
+
+    SrcCtx:
+      description: The name of the segment or matcher
+      type: string
+      minLength: 1
+      maxLength: 255
+      example: uk-customers
 
     ClientRef:
       description: Client reference of up to 100 characters. The reference will be present in every relevant event.
@@ -1709,7 +1864,7 @@ components:
       type: object
       properties:
         invocation_id:
-          $ref: "#/components/schemas/InvocationId"
+          $ref: "#/components/schemas/InvocationIdExpression"
         value:
           description: expression used to extract the status value from the response for example in a sync response, this would be the {{ response.statusCode }} or a payload attribute {{ response.payload.status }}
           type: string
@@ -2123,8 +2278,7 @@ components:
         type:
           $ref: "#/components/schemas/StatisticsEventType"
         src_ctx:
-          type: string
-          example: uk recipient
+          $ref: "#/components/schemas/SrcCtx"
         occurred_at:
           type: string
           format: date-time
@@ -2168,7 +2322,7 @@ components:
             action_id:
               $ref: "#/components/schemas/ActionId"
             invocation_id:
-              $ref: "#/components/schemas/InvocationId"
+              $ref: "#/components/schemas/InvocationIdExpression"
       required:
         - action_id
 
