@@ -1534,38 +1534,25 @@ components:
       description: default error attributes in Proactive Connect implementation
       allOf:
         # todo: align error response with error spec
-        #        - $ref: "common/common_errors.yml#/components/responses/DefaultError/content/application~1json/schema"
+        - $ref: "common/common_errors.yml#/components/responses/DefaultError/content/application~1json/schema"
         - type: object
           properties:
-            code:
-              description: http status code
-              example: 400
-            path:
-              description: url path to the requested resource
-              example: /v0.1/bulk/lists?page=-1&page_size=2
-            method:
-              description: http method
-              example: GET
-            message:
-              description: additional information on the error or it's root cause
-              type: object
-              properties:
-                status_code:
-                  description: http status code
-                  example: 400
-                error:
-                  description: error string
-                  type: string
-                  example: Bad request
-                message:
-                  description: list of error description
-                  type: array
-                  items:
-                    type: string
-                  example:
-                    - "page must not be less than 1"
-                    - "name must be longer than or equal to 1 characters"
-                    - "name must be a string"
+            type:
+              example: "https://developer.vonage.com/en/api-errors"
+            title:
+              example: Request data did not validate
+            detail:
+              example: Bad Request
+            instance:
+              example: 14225136-3501-4f29-8ee1-6b6301e9b64c
+            errors:
+              description: list of error description
+              type: array
+              items:
+                type: string
+              example:
+                - name must be longer than or equal to 1 characters
+                - name must be a string
 
     ApiDataAffected:
       description: Count of affected data records as a result of the API action
